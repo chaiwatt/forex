@@ -1,0 +1,13 @@
+@font-face {
+    font-family: 'Kanit';
+    src: url('../fonts/Kanit-Light.eot');
+    src: url('../fonts/Kanit-Light.woff') format('woff'),
+         url('../fonts/Kanit-Light.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+  }
+  
+  body{
+    font-family: "Kanit"; 
+    font-size:16px;
+  }
