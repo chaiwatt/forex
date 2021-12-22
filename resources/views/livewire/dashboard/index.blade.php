@@ -9,17 +9,22 @@
             padding: 0;
         }
         #rsi_chart {
-            margin-top: -70px;
+            margin: 20px;
             height: 400px;
             width: 96%;
         }
         #macd_chart {
-            margin-top: -70px;
+            margin: 20px;
             height: 400px;
             width: 96%;
         }
+        /* #atr_chart {
+            margin: 20px;
+            height: 400px;
+            width: 96%;
+        } */
         #cci_chart {
-            margin-top: -70px;
+            margin: 20px;
             margin-left: 20px;
             height: 400px;
             width: 96%;
@@ -42,6 +47,7 @@
                     <div id="canndle_stick_chart"></div>
                     <div id="macd_chart"></div>
                     <div id="rsi_chart"></div>
+                    <div id="atr_chart"></div>
                     <div id="cci_chart"></div>
                 </div>
             </div>
@@ -51,7 +57,20 @@
 @push('js')
 
 <script>
+    var upColor = '#00da3c';
+    var downColor = '#ec0000';
+
   
+    var data = [];// Open，Close，Low，Hi
+    var axisData = [];
+
+    var MacdArr = [];
+    var SignalArr = [];
+    var HistogramArr = [];
+    var RSIArr = [];
+    var RSIDelayArr = [];
+    var CCIArr = [];
+    var CrossLineArr = [];
 
     var forexData =  @json($data);
     function getAvgClosedPrice(mArray,mRange){
@@ -204,7 +223,7 @@
             return _delayAsi;
     }
 
-    function getCCI(highArray,lowArray,closeArray,mRange) {
+    function CCICalc(highArray,lowArray,closeArray,mRange) {
         const cciContant = 0.015;
         var typicalPriceArray = [];
         for (var i = 0; i < highArray.length; i++) {
@@ -280,22 +299,9 @@
         return _crossList;
     }
 
-    
-    document.addEventListener('livewire:load', () =>{
-        @this.on('refreshChart', (chartData) => {
-            console.log(chartData);
-            // forexData =  chartData;
-            canndleStickChart.setOption(option);
-            rsiChart.setOption(option_rsi);
-            macdChart.setOption(option_macd);
-            cciChart.setOption(option_CCI);
-        });
-    });
-    
-       
-      var colorList = ['#c23531','#2f4554', '#61a0a8', '#d48265', '#91c7ae','#749f83',  '#ca8622', '#bda29a','#6e7074', '#546570', '#c4ccd3'];
-           
-        var data = [];// Open，Close，Low，Hi
+        //   var colorList = ['#c23531','#2f4554', '#61a0a8', '#d48265', '#91c7ae','#749f83',  '#ca8622', '#bda29a','#6e7074', '#546570', '#c4ccd3'];
+
+    function createData(_forexData){
         var closedPrice = [];
         var lowPrice = [];
         var highPrice = [];
@@ -307,12 +313,11 @@
         var RSI = [];
         var DelayRSI = [];
         var CCI = [];
-        var axisData = [];
-        data = getData(forexData);
-        closedPrice = getClosedPrice(forexData);
-        lowPrice = getLowPrice(forexData);
-        highPrice = getHighPrice(forexData);
-        axisData = getDateLabel(forexData); 
+        data = getData(_forexData);
+        closedPrice = getClosedPrice(_forexData);
+        lowPrice = getLowPrice(_forexData);
+        highPrice = getHighPrice(_forexData);
+        axisData = getDateLabel(_forexData); 
         
         EMA12 = EMACalc(closedPrice,12);
         EMA26 = EMACalc(closedPrice,26);
@@ -321,7 +326,7 @@
         HISTOGRAM = HistogramCalc(SIGNAL,MACD,9);
         RSI = RS(closedPrice,14);
         DelayRSI = delayRSI(RSI,5);
-        CCI = getCCI(highPrice,lowPrice,closedPrice,20);
+        CCI = CCICalc(highPrice,lowPrice,closedPrice,20);
 
         // var lineArray = getLineArray(MACD,SIGNAL,closedPrice);
         // for (var i = 0; i < lineArray.length; i++) {
@@ -343,13 +348,31 @@
         var nullRSDELAY = Array(closedPrice.length - DelayRSI.length).fill(null);
         var nullCCI = Array(closedPrice.length - CCI.length).fill(null);
 
-        var MacdArr = nullForMACD.concat(MACD); 
-        var SignalArr = nullForSIGNAL.concat(SIGNAL); 
-        var HistogramArr = nullForHISTOGRAM.concat(HISTOGRAM); 
-        var RSIArr = nullRS.concat(RSI); 
-        var RSIDelayArr = nullRSDELAY.concat(DelayRSI); 
-        var CCIArr = nullCCI.concat(CCI); 
-        var CrossLineArr = genCrossList(closedPrice,getSignChange(HistogramArr)); 
+         MacdArr = nullForMACD.concat(MACD); 
+         SignalArr = nullForSIGNAL.concat(SIGNAL); 
+         HistogramArr = nullForHISTOGRAM.concat(HISTOGRAM); 
+         RSIArr = nullRS.concat(RSI); 
+         RSIDelayArr = nullRSDELAY.concat(DelayRSI); 
+         CCIArr = nullCCI.concat(CCI); 
+         CrossLineArr = genCrossList(closedPrice,getSignChange(HistogramArr)); 
+    }
+
+    
+    
+    document.addEventListener('livewire:load', () =>{
+        @this.on('refreshChart', (chartData) => {
+            console.log(chartData);
+            // forexData =  chartData;
+            canndleStickChart.setOption(option);
+            rsiChart.setOption(option_rsi);
+            macdChart.setOption(option_macd);
+            cciChart.setOption(option_CCI);
+        });
+    });
+    
+    createData(forexData);
+       
+
 
         // console.log(CrossLineArr);
 
@@ -378,9 +401,12 @@
         var dataMA20 = calculateMA(20, data);
 
             option = {
-                color: colorList,
+                backgroundColor: '#21202D',
                 title : {
-                    text: 'FOREX USDJYP'
+                    text: 'USDJYP',
+                    textStyle: {
+                        color: '#fff'
+                    }
                 },
                 tooltip : {
                     trigger: 'axis',
@@ -394,7 +420,10 @@
                     }
                 },
                 legend: {
-                    data:['USDJYP','RSI','MACD','CCI', 'MA5', 'MA10', 'MA20', 'MA30']
+                    data:['USDJYP','MA5', 'MA10', 'MA20'],
+                    textStyle: {
+                        color: '#fff'
+                    }
                 },
                 toolbox: {
                     show : true,
@@ -451,6 +480,12 @@
                             },
                             data: CrossLineArr,
                         },
+                        itemStyle: {
+                            color: upColor,
+                            color0: downColor,
+                            borderColor: null,
+                            borderColor0: null
+                        },
                     }, {
                         name: 'MA5',
                         type: 'line',
@@ -483,13 +518,17 @@
             };
 
             option_rsi = {
+                backgroundColor: '#21202D',
                 tooltip : {
                     trigger: 'axis',
                     showDelay: 0             // delay ms
                 },
                 legend: {
-                    y : -30,
-                    data:['USDJYP','RSI','MACD','CCI']
+                    // y : -30,
+                    data:['RSI','RSIDELAY'],
+                    textStyle: {
+                        color: '#fff'
+                    }
                 },
                 toolbox: {
                     y : -30,
@@ -582,13 +621,17 @@
             };
 
             option_macd = {
+                backgroundColor: '#21202D',
                 tooltip : {
                     trigger: 'axis',
                     showDelay: 0             // delay ms
                 },
                 legend: {
-                    y : -30,
-                    data:['USDJYP','RSI','MACD','CCI']
+                    // y : -30,
+                    data:['MACD','SIGNAL','HISTOGRAM'],
+                    textStyle: {
+                        color: '#fff'
+                    }
                 },
                 toolbox: {
                     y : -30,
@@ -645,7 +688,7 @@
                         symbol: 'none',
                         data: SignalArr,
                     },{
-                        name:'SIGNAL',
+                        name:'HISTOGRAM',
                         type:'bar',
                         symbol: 'none',
                         data: HistogramArr,
@@ -654,13 +697,16 @@
             };
 
             option_CCI = {
+                backgroundColor: '#21202D',
                 tooltip : {
                     trigger: 'axis',
                     showDelay: 0             // delay ms
                 },
                 legend: {
-                    y : -30,
-                    data:['USDJYP','RSI','MACD','CCI']
+                    data:['CCI'],
+                    textStyle: {
+                        color: '#fff'
+                    }
                 },
                 toolbox: {
                     y : -30,
