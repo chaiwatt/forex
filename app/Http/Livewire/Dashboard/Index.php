@@ -18,9 +18,7 @@ class Index extends Component
     public function fetchData(){
         $this->numOfFetch += 1;
         $this->data = StockData::take($this->numOfFetch)->get()->map(fn($item) => [$item-> date, $item->open, $item->close, $item->low, $item->high]);
-        $this->emit('refreshChart',[
-            'chartData' => $this->data
-        ]);
+        $this->emit('refreshChart',$this->data);
     }
 
     public function render()

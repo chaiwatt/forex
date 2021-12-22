@@ -59,7 +59,12 @@
 <script>
     var upColor = '#00da3c';
     var downColor = '#ec0000';
-
+    var firstRun = true;
+    var numOfCross = 0;
+    var numOfTick = 0;
+    var dataMA5 = [];
+    var dataMA10 = [];
+    var dataMA20 = [];
   
     var data = [];// Open，Close，Low，Hi
     var axisData = [];
@@ -285,16 +290,16 @@
     function genCrossList(arr1,arr2){
         var _crossList = [];
         for (var i = 0; i < arr2.length; i++) {
-        var label = 'Buy';
-        if(arr2[i][1] > arr2[i][2]){
-                label = 'Sale';
-        }
-        _crossList[i] = {
-                    name: label,
-                    value: arr1[arr2[i][0]+1],
-                    xAxis: arr2[i][0],
-                    yAxis: arr1[arr2[i][0]+1]
-            };
+            var label = 'Buy';
+            if(arr2[i][1] > arr2[i][2]){
+                    label = 'Sale';
+            }
+            _crossList[i] = {
+                        name: label,
+                        value: arr1[arr2[i][0]+1],
+                        xAxis: arr2[i][0],
+                        yAxis: arr1[arr2[i][0]+1]
+                };
         }
         return _crossList;
     }
@@ -327,6 +332,7 @@
         RSI = RS(closedPrice,14);
         DelayRSI = delayRSI(RSI,5);
         CCI = CCICalc(highPrice,lowPrice,closedPrice,20);
+        
 
         // var lineArray = getLineArray(MACD,SIGNAL,closedPrice);
         // for (var i = 0; i < lineArray.length; i++) {
@@ -355,27 +361,125 @@
          RSIDelayArr = nullRSDELAY.concat(DelayRSI); 
          CCIArr = nullCCI.concat(CCI); 
          CrossLineArr = genCrossList(closedPrice,getSignChange(HistogramArr)); 
+
+         dataMA5 = calculateMA(5, data);
+         dataMA10 = calculateMA(10, data);
+         dataMA20 = calculateMA(20, data);
+
+         var hisTogramData = getSignChange(HistogramArr);
+         var sumHistogram = 0;
+         if(numOfTick != 0){
+            numOfTick ++;
+         }
+
+        
+         if(firstRun == true){
+            numOfCross = hisTogramData.length;
+            firstRun = false;
+         }else{
+             if(hisTogramData.length > numOfCross){
+                numOfCross = hisTogramData.length;
+                numOfTick = 1;
+                // console.log(hisTogramData);
+                
+             }
+         }
+         console.log(hisTogramData[hisTogramData.length-1]);
+         console.log(numOfCross + ' ' + numOfTick );
+
+        //  for (var i = 0; i < arr2.length; i++) {
+        //     var label = 'Buy';
+        //     if(arr2[i][1] > arr2[i][2]){
+        //             label = 'Sale';
+        //     }
+        //     _crossList[i] = {
+        //                 name: label,
+        //                 value: arr1[arr2[i][0]+1],
+        //                 xAxis: arr2[i][0],
+        //                 yAxis: arr1[arr2[i][0]+1]
+        //         };
+        // }
     }
 
-    
-    
     document.addEventListener('livewire:load', () =>{
         @this.on('refreshChart', (chartData) => {
-            console.log(chartData);
-            // forexData =  chartData;
-            canndleStickChart.setOption(option);
-            rsiChart.setOption(option_rsi);
-            macdChart.setOption(option_macd);
-            cciChart.setOption(option_CCI);
+            createData(chartData);
+            canndleStickChart.setOption({
+                series : [
+                    {
+                        data: data,
+                    }, {
+                        name: 'MA5',
+                        data: dataMA5,
+                    }, {
+                        name: 'MA10',
+                        data: dataMA10,
+                    }, {
+                        name: 'MA20',
+                        data: dataMA20,
+                    }
+                ],                
+                xAxis : [
+                    {
+                        data : axisData
+                    }
+                ],
+            });
+            rsiChart.setOption({
+                series : [//
+                    {
+                        name:'RSI',
+
+                        data: RSIArr,
+                    },
+                    {
+                        name:'RSIDELAY',
+                        data: RSIDelayArr,
+                    }
+                ],                
+                xAxis : [
+                    {
+                        data : axisData
+                    }
+                ],
+            });
+            macdChart.setOption({
+                series : [
+                    {
+                        name:'MACD',
+                        data: MacdArr,
+                    },{
+                        name:'SIGNAL',
+                        data: SignalArr,
+                    },{
+                        name:'HISTOGRAM',
+                        data: HistogramArr,
+                    }
+                ],                
+                xAxis : [
+                    {
+                        data : axisData
+                    }
+                ],
+            });
+            cciChart.setOption({
+                series : [
+                    {
+                        name:'CCI',
+                        data: CCIArr,
+                    }
+                ],                
+                xAxis : [
+                    {
+                        data : axisData
+                    }
+                ],
+            });
         });
     });
     
     createData(forexData);
        
-
-
-        // console.log(CrossLineArr);
-
         for (var i = 0; i < HistogramArr.length; i++) {
             
             var first = false;
@@ -395,10 +499,6 @@
                 // }
             }
         }
-
-        var dataMA5 = calculateMA(5, data);
-        var dataMA10 = calculateMA(10, data);
-        var dataMA20 = calculateMA(20, data);
 
             option = {
                 backgroundColor: '#21202D',
