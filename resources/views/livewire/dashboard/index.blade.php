@@ -39,8 +39,8 @@
 <div>
     <div class="card ">
         <div class="card-body">
-            {{-- <button wire:click="fetchData" type="button" class="btn btn-primary">Refresh</button> --}}
-            <button wire:poll.500ms="fetchData" type="button" class="btn btn-primary">Refresh</button>
+            <button wire:click="fetchData" type="button" class="btn btn-primary">Refresh</button>
+            {{-- <button wire:poll.500ms="fetchData" type="button" class="btn btn-primary">Refresh</button> --}}
   {{-- {{$numOfFetch}} --}}
 
             <div class="row" >
@@ -80,6 +80,8 @@
     var RSIDelayArr = [];
     var CCIArr = [];
     var CrossClosedWithHistogram = [];
+    var onOrder = false;
+    var macdAtCross = [];
 
     var forexData =  @json($data);
     function getAvgClosedPrice(mArray,mRange){
@@ -407,13 +409,33 @@
                  if(sumHistogram !== 0){
                     previousSum = sumHistogram;
                  }
-                 if(numOfTick > 10 ){
-                    console.log('นับ:' + numOfTick + ' ผลรวมนะ Histogram:' + (sumHistogram-hisTogramData[hisTogramData.length-1][2]) + ' Macd:' + MacdArr[histogramIndex-1] + ' CCI:' + CCIArr[histogramIndex]);
+                 if(MacdArr[histogramIndex] !== null){
+                    macdAtCross.push(MacdArr[histogramIndex]);
+                    // console.log(macdAtCross);
                  }
-                //  console.log(hisTogramData[hisTogramData.length-1]);
-                 if(numOfTick > 15 && ((sumHistogram-hisTogramData[hisTogramData.length-1][2])*-1)  > 0.06 && (MacdArr[histogramIndex]*-1) > 0.01){
-                    console.log('buy signal');
+
+                 if(macdAtCross.length > 1){
+                     var diffMacd = Math.abs((macdAtCross[macdAtCross.length-1] - macdAtCross[macdAtCross.length-2]));
+                    // console.log('macd diff: ' + diffMacd );
+                    if(diffMacd > 0.02){
+                        console.log('macd diff เกิน 0.2 ');
+                    }
                  }
+             
+
+                 if(onOrder == true){
+                    console.log('ขาย' + data[histogramIndex][1]);
+                    console.log('====');
+                    onOrder = false;
+                 }
+   
+                //  if(numOfTick > 15 && ((sumHistogram-hisTogramData[hisTogramData.length-1][2])*-1)  > 0.06 && (MacdArr[histogramIndex]*-1) > 0.01){
+                 if(numOfTick > 10 && ((sumHistogram-hisTogramData[hisTogramData.length-1][2])*-1)  > 0.03 && (MacdArr[histogramIndex]*-1) > 0.01){
+                    onOrder = true;
+                    console.log('ซื้อ' + data[histogramIndex][1]);
+                 }
+
+               
                 
                 sumHistogram = 0;
                 numOfCross = hisTogramData.length;
@@ -438,7 +460,7 @@
              }
          }
         //  if(numOfTick > 10){
-            console.log('นับ:' + numOfTick + ' ผลรวม Histogram:' + sumHistogram + ' Macd:' + MacdArr[histogramIndex] + ' HIST:' + HistogramArr[histogramIndex]);
+            //  console.log('นับ:' + numOfTick + ' ผลรวม Histogram:' + sumHistogram + ' Macd:' + MacdArr[histogramIndex] + ' HIST:' + HistogramArr[histogramIndex]);
         //  }
          
         //  if(numOfTick > 30 && sumHistogram < -0.12 && MacdArr[histogramIndex] < -0.12){
@@ -474,7 +496,7 @@
                     }
                 ],
                 dataZoom : {
-                    start : Math.round((data.length-100)/(data.length)*100),
+                    start : Math.round((data.length-70)/(data.length)*100),
                     end : 100
                 },
      
@@ -498,7 +520,7 @@
                     }
                 ],
                 dataZoom : {
-                    start : Math.round((data.length-100)/(data.length)*100),
+                    start : Math.round((data.length-70)/(data.length)*100),
                     end : 100
                 },
             });
@@ -521,7 +543,7 @@
                     }
                 ],
                 dataZoom : {
-                    start : Math.round((data.length-100)/(data.length)*100),
+                    start : Math.round((data.length-70)/(data.length)*100),
                     end : 100
                 },
             });
@@ -538,7 +560,7 @@
                     }
                 ],
                 dataZoom : {
-                    start : Math.round((data.length-100)/(data.length)*100),
+                    start : Math.round((data.length-70)/(data.length)*100),
                     end : 100
                 },
             });
@@ -587,7 +609,7 @@
                     y: 250,
                     show : false,
                     realtime: true,
-                    start : Math.round((data.length-100)/(data.length)*100),
+                    start : Math.round((data.length-70)/(data.length)*100),
                     end : 100
                 },
                 grid: {
@@ -694,7 +716,7 @@
                 dataZoom : {
                     show : false,
                     realtime: true,
-                    start : Math.round((data.length-100)/(data.length)*100),
+                    start : Math.round((data.length-70)/(data.length)*100),
                     end : 100
                 },
                 grid: {
@@ -797,7 +819,7 @@
                 dataZoom : {
                     show : false,
                     realtime: true,
-                    start : Math.round((data.length-100)/(data.length)*100),
+                    start : Math.round((data.length-70)/(data.length)*100),
                     end : 100
                 },
                 grid: {
@@ -873,7 +895,7 @@
                     bottom: 5,
                     show : true,
                     realtime: true,
-                    start : Math.round((data.length-100)/(data.length)*100),
+                    start : Math.round((data.length-70)/(data.length)*100),
                     end : 100
                 },
                 grid: {
