@@ -65,7 +65,7 @@
     var numOfTick = 0;
     var histogramIndex = 0;
     var sumHistogram = 0;
-    var coordOfCrossSMA = [];
+    var coordOfCross = [];
     var dataMA5 = [];
     var dataMA10 = [];
     var dataMA20 = [];
@@ -123,7 +123,7 @@
 
         var _closedprice = []
         for (var i = 0; i < rawData.length; i++) {
-            _closedprice.push(rawData[i][2])
+            _closedprice.push(rawData[i][4])
         }
         return _closedprice
     }
@@ -139,7 +139,7 @@
     function getHighPrice(rawData) {
         var _highprice = []
         for (var i = 0; i < rawData.length; i++) {
-            _highprice.push(rawData[i][4])
+            _highprice.push(rawData[i][2])
         }
         return _highprice
     }
@@ -334,7 +334,6 @@
                 xValue = i;
                 yValue = longSMA[i];
             }
-            
         }
         console.log('X:'+xValue + ' Y:' + yValue)
     }
@@ -382,8 +381,6 @@
          dataMA10 = calculateMA(10, data);
         //  dataMA20 = calculateMA(20, data);
 
-        console.log(dataMA10);
-
          MacdArr = nullForMACD.concat(MACD); 
          SignalArr = nullForSIGNAL.concat(SIGNAL); 
          HistogramArr = nullForHISTOGRAM.concat(HISTOGRAM); 
@@ -404,7 +401,7 @@
          if(firstRun == true){
             numOfCross = hisTogramData.length;
             firstRun = false;
-            coordOfCrossSMA = crossSMA(dataMA5,dataMA10);
+            // coordOfCrossSMA = crossSMA(dataMA5,dataMA10);
          }else{
              if(hisTogramData.length > numOfCross){
                  if(sumHistogram !== 0){
@@ -416,6 +413,15 @@
                 numOfTick = 1;
                 
                 histogramIndex = hisTogramData[hisTogramData.length-1][0]
+                // console.log('X:'+ histogramIndex + ' Y:' + closedPrice[histogramIndex] );
+                // coordOfCross.push([histogramIndex,closedPrice[histogramIndex]]);
+                
+                // if(coordOfCross.length > 1){
+                //     var deltaX = coordOfCross[coordOfCross.length-1][0] - coordOfCross[coordOfCross.length-2][0];
+                //     var deltaY = coordOfCross[coordOfCross.length-1][1] - coordOfCross[coordOfCross.length-2][1];
+                //     var angleDeg = Math.atan(deltaY/deltaX);
+                //     console.log('dX:'+ coordOfCross[coordOfCross.length-1][0] +'-'+ coordOfCross[coordOfCross.length-2][0] + ' dY:'+ coordOfCross[coordOfCross.length-1][1] +'-'+ coordOfCross[coordOfCross.length-2][1] + ' angle:' + angleDeg);
+                // }
                 histogramIndex ++;
                 sumHistogram += HistogramArr[histogramIndex]
 

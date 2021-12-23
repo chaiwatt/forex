@@ -11,7 +11,7 @@ class Index extends Component
     public $numOfFetch ;
 
     public function mount(){
-        $this->numOfFetch = 135;
+        $this->numOfFetch = 140;
         $this->data = StockData::take($this->numOfFetch)->get()->map(fn($item) => [$item-> date, $item->open, $item->high, $item->low, $item->close]);
         // $this->data = StockData::get()->map(fn($item) => [$item-> date, $item->open, $item->high, $item->low, $item->close]);
     }
