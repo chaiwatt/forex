@@ -39,8 +39,8 @@
 <div>
     <div class="card ">
         <div class="card-body">
-            <button wire:click="fetchData" type="button" class="btn btn-primary">Refresh</button>
-            {{-- <button wire:poll="fetchData" type="button" class="btn btn-primary">Refresh</button> --}}
+            {{-- <button wire:click="fetchData" type="button" class="btn btn-primary">Refresh</button> --}}
+            <button wire:poll.500ms="fetchData" type="button" class="btn btn-primary">Refresh</button>
   {{-- {{$numOfFetch}} --}}
 
             <div class="row" >
@@ -407,6 +407,13 @@
                  if(sumHistogram !== 0){
                     previousSum = sumHistogram;
                  }
+                 if(numOfTick > 10 ){
+                    console.log('นับ:' + numOfTick + ' ผลรวมนะ Histogram:' + (sumHistogram-hisTogramData[hisTogramData.length-1][2]) + ' Macd:' + MacdArr[histogramIndex-1] + ' CCI:' + CCIArr[histogramIndex]);
+                 }
+                //  console.log(hisTogramData[hisTogramData.length-1]);
+                 if(numOfTick > 15 && ((sumHistogram-hisTogramData[hisTogramData.length-1][2])*-1)  > 0.06 && (MacdArr[histogramIndex]*-1) > 0.01){
+                    console.log('buy signal');
+                 }
                 
                 sumHistogram = 0;
                 numOfCross = hisTogramData.length;
@@ -426,12 +433,19 @@
                 sumHistogram += HistogramArr[histogramIndex]
 
                 previousSum += sumHistogram*-1;
-                console.log('ผลรวม History:' + ' ' + previousSum);
+                // console.log('ผลรวม History:' + ' ' + previousSum);
 
              }
          }
+        //  if(numOfTick > 10){
+            console.log('นับ:' + numOfTick + ' ผลรวม Histogram:' + sumHistogram + ' Macd:' + MacdArr[histogramIndex] + ' HIST:' + HistogramArr[histogramIndex]);
+        //  }
+         
+        //  if(numOfTick > 30 && sumHistogram < -0.12 && MacdArr[histogramIndex] < -0.12){
+        //     console.log('buy signal');
+        //  }
 
-         console.log('นับ:' + numOfTick + ' ผลรวม History:' + sumHistogram + ' Macd:' + MacdArr[histogramIndex]);
+
 
     }
 
