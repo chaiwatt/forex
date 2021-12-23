@@ -413,27 +413,35 @@
                     macdAtCross.push(MacdArr[histogramIndex]);
                     // console.log(macdAtCross);
                  }
-
-                 if(macdAtCross.length > 1){
-                     var diffMacd = Math.abs((macdAtCross[macdAtCross.length-1] - macdAtCross[macdAtCross.length-2]));
-                    // console.log('macd diff: ' + diffMacd );
-                    if(diffMacd > 0.02){
-                        console.log('macd diff เกิน 0.2 ');
-                    }
-                 }
-             
-
+                 
                  if(onOrder == true){
                     console.log('ขาย' + data[histogramIndex][1]);
                     console.log('====');
                     onOrder = false;
                  }
-   
-                //  if(numOfTick > 15 && ((sumHistogram-hisTogramData[hisTogramData.length-1][2])*-1)  > 0.06 && (MacdArr[histogramIndex]*-1) > 0.01){
-                 if(numOfTick > 10 && ((sumHistogram-hisTogramData[hisTogramData.length-1][2])*-1)  > 0.03 && (MacdArr[histogramIndex]*-1) > 0.01){
-                    onOrder = true;
-                    console.log('ซื้อ' + data[histogramIndex][1]);
+
+                 
+                 if(macdAtCross.length > 1){
+                     var diffMacd = Math.abs((macdAtCross[macdAtCross.length-1] - macdAtCross[macdAtCross.length-2]));
+                    // console.log('macd diff: ' + diffMacd );
+                    if(diffMacd > 0.015){
+                        // console.log('macd diff เกิน 0.15 ');
+                        if(numOfTick > 10 && ((sumHistogram-hisTogramData[hisTogramData.length-1][2])*-1)  > 0.03){
+                            onOrder = true;
+                            console.log('ซื้อ' + data[histogramIndex][1]);
+                        }
+
+                    }
                  }
+             
+
+        
+   
+                // //  if(numOfTick > 15 && ((sumHistogram-hisTogramData[hisTogramData.length-1][2])*-1)  > 0.06 && (MacdArr[histogramIndex]*-1) > 0.01){
+                //  if(numOfTick > 10 && ((sumHistogram-hisTogramData[hisTogramData.length-1][2])*-1)  > 0.03 && (MacdArr[histogramIndex]*-1) > 0.01){
+                //     onOrder = true;
+                //     console.log('ซื้อ' + data[histogramIndex][1]);
+                //  }
 
                
                 
