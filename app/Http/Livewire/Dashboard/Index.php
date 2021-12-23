@@ -12,12 +12,13 @@ class Index extends Component
 
     public function mount(){
         $this->numOfFetch = 120;
-        $this->data = StockData::take($this->numOfFetch)->get()->map(fn($item) => [$item-> date, $item->open, $item->close, $item->low, $item->high]);
+        $this->data = StockData::take($this->numOfFetch)->get()->map(fn($item) => [$item-> date, $item->open, $item->high, $item->low, $item->close]);
+        // $this->data = StockData::get()->map(fn($item) => [$item-> date, $item->open, $item->high, $item->low, $item->close]);
     }
 
     public function fetchData(){
         $this->numOfFetch += 1;
-        $this->data = StockData::take($this->numOfFetch)->get()->map(fn($item) => [$item-> date, $item->open, $item->close, $item->low, $item->high]);
+        $this->data = StockData::take($this->numOfFetch)->get()->map(fn($item) => [$item-> date, $item->open, $item->high, $item->low, $item->close]);
         $this->emit('refreshChart',$this->data);
     }
 

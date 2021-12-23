@@ -17,9 +17,9 @@ class CreateStockDataTable extends Migration
             $table->id();
             $table->string('date');
             $table->double('open',10,5)->comment('open');
-            $table->double('close',10,5)->comment('close');
-            $table->double('low',10,5)->comment('low');
             $table->double('high',10,5)->comment('high');
+            $table->double('low',10,5)->comment('low');
+            $table->double('close',10,5)->comment('close');
             $table->double('volume',15,5)->default(0)->comment('volume');
             $table->timestamps();
         });

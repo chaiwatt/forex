@@ -40,6 +40,7 @@
     <div class="card ">
         <div class="card-body">
             <button wire:click="fetchData" type="button" class="btn btn-primary">Refresh</button>
+            {{-- <button wire:poll="fetchData" type="button" class="btn btn-primary">Refresh</button> --}}
   {{-- {{$numOfFetch}} --}}
 
             <div class="row" >
@@ -62,6 +63,8 @@
     var firstRun = true;
     var numOfCross = 0;
     var numOfTick = 0;
+    var histogramIndex = 0;
+    var sumHistogram = 0;
     var dataMA5 = [];
     var dataMA10 = [];
     var dataMA20 = [];
@@ -152,7 +155,7 @@
         var _data = []
         
         for (var i = 0; i < rawData.length; i++) {
-            _data.push(Object.seal([rawData[i][1],rawData[i][2],rawData[i][3],rawData[i][4]]))
+            _data.push(Object.seal([rawData[i][1],rawData[i][4],rawData[i][3],rawData[i][2]]))
         }
         return _data
     }
@@ -333,7 +336,6 @@
         DelayRSI = delayRSI(RSI,5);
         CCI = CCICalc(highPrice,lowPrice,closedPrice,20);
         
-
         // var lineArray = getLineArray(MACD,SIGNAL,closedPrice);
         // for (var i = 0; i < lineArray.length; i++) {
         //     if(lineArray[i] !== null){
@@ -367,9 +369,13 @@
          dataMA20 = calculateMA(20, data);
 
          var hisTogramData = getSignChange(HistogramArr);
-         var sumHistogram = 0;
+         var previousSum = 0;
          if(numOfTick != 0){
             numOfTick ++;
+            histogramIndex ++
+            sumHistogram += HistogramArr[histogramIndex]
+           
+            //console.log(HistogramArr[histogramIndex]);
          }
 
         
@@ -378,14 +384,26 @@
             firstRun = false;
          }else{
              if(hisTogramData.length > numOfCross){
+                 if(sumHistogram !== 0){
+                    previousSum = sumHistogram;
+                 }
+                sumHistogram = 0;
                 numOfCross = hisTogramData.length;
                 numOfTick = 1;
-                // console.log(hisTogramData);
                 
+                histogramIndex = hisTogramData[hisTogramData.length-1][0]
+                histogramIndex ++;
+                sumHistogram += HistogramArr[histogramIndex]
+                // console.log('previous sum' + ' ' + sumHistogram);
+                // if(sumHistogram < 0){
+                    previousSum += sumHistogram*-1;
+                     console.log('ผลรวม History:' + ' ' + previousSum);
+                // }
              }
          }
-         console.log(hisTogramData[hisTogramData.length-1]);
-         console.log(numOfCross + ' ' + numOfTick );
+
+         console.log('นับ:' + numOfTick + ' ผลรวม History:' + sumHistogram + ' Macd:' + MacdArr[histogramIndex]);
+
 
         //  for (var i = 0; i < arr2.length; i++) {
         //     var label = 'Buy';
@@ -424,6 +442,12 @@
                         data : axisData
                     }
                 ],
+                dataZoom : {
+                    start : Math.round((data.length-100)/(data.length)*100),
+                    end : 100
+                },
+     
+
             });
             rsiChart.setOption({
                 series : [//
@@ -442,6 +466,10 @@
                         data : axisData
                     }
                 ],
+                dataZoom : {
+                    start : Math.round((data.length-100)/(data.length)*100),
+                    end : 100
+                },
             });
             macdChart.setOption({
                 series : [
@@ -461,6 +489,10 @@
                         data : axisData
                     }
                 ],
+                dataZoom : {
+                    start : Math.round((data.length-100)/(data.length)*100),
+                    end : 100
+                },
             });
             cciChart.setOption({
                 series : [
@@ -474,6 +506,10 @@
                         data : axisData
                     }
                 ],
+                dataZoom : {
+                    start : Math.round((data.length-100)/(data.length)*100),
+                    end : 100
+                },
             });
         });
     });
@@ -539,7 +575,7 @@
                     y: 250,
                     show : false,
                     realtime: true,
-                    start : 50,
+                    start : Math.round((data.length-100)/(data.length)*100),
                     end : 100
                 },
                 grid: {
@@ -645,7 +681,7 @@
                 dataZoom : {
                     show : false,
                     realtime: true,
-                    start : 50,
+                    start : Math.round((data.length-100)/(data.length)*100),
                     end : 100
                 },
                 grid: {
@@ -748,7 +784,7 @@
                 dataZoom : {
                     show : false,
                     realtime: true,
-                    start : 50,
+                    start : Math.round((data.length-100)/(data.length)*100),
                     end : 100
                 },
                 grid: {
@@ -824,7 +860,7 @@
                     bottom: 5,
                     show : true,
                     realtime: true,
-                    start : 50,
+                    start : Math.round((data.length-100)/(data.length)*100),
                     end : 100
                 },
                 grid: {
