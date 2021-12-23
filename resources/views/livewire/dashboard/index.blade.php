@@ -65,6 +65,7 @@
     var numOfTick = 0;
     var histogramIndex = 0;
     var sumHistogram = 0;
+    var coordOfCrossSMA = [];
     var dataMA5 = [];
     var dataMA10 = [];
     var dataMA20 = [];
@@ -78,7 +79,7 @@
     var RSIArr = [];
     var RSIDelayArr = [];
     var CCIArr = [];
-    var CrossLineArr = [];
+    var CrossClosedWithHistogram = [];
 
     var forexData =  @json($data);
     function getAvgClosedPrice(mArray,mRange){
@@ -290,7 +291,7 @@
     }
 
 
-    function genCrossList(arr1,arr2){
+    function crossListCalc(arr1,arr2){
         var _crossList = [];
         for (var i = 0; i < arr2.length; i++) {
             var label = 'Buy';
@@ -305,6 +306,37 @@
                 };
         }
         return _crossList;
+    }
+
+    function crossSMA(shortSMA,longSMA){
+        var xValue = 0;
+        var yValue = 0;
+        var start = 0; //buy
+        if(shortSMA[shortSMA.length-1] > longSMA[longSMA.length-1] ){
+            start = 1; //sale
+            console.log('start with sale')
+        }else{
+            console.log('start with buy')
+        }
+        if(start == 0){
+            for(var i = longSMA.length-1 ; i > 0 ; i--){
+                if(shortSMA[i] > longSMA[i]){
+                    break;
+                }
+                xValue = i;
+                yValue = shortSMA[i];
+            }
+        }else{
+            for(var i = longSMA.length-1 ; i > 0 ; i--){
+                if(shortSMA[i] < longSMA[i]){
+                    break;
+                }
+                xValue = i;
+                yValue = longSMA[i];
+            }
+            
+        }
+        console.log('X:'+xValue + ' Y:' + yValue)
     }
 
         //   var colorList = ['#c23531','#2f4554', '#61a0a8', '#d48265', '#91c7ae','#749f83',  '#ca8622', '#bda29a','#6e7074', '#546570', '#c4ccd3'];
@@ -336,16 +368,6 @@
         DelayRSI = delayRSI(RSI,5);
         CCI = CCICalc(highPrice,lowPrice,closedPrice,20);
         
-        // var lineArray = getLineArray(MACD,SIGNAL,closedPrice);
-        // for (var i = 0; i < lineArray.length; i++) {
-        //     if(lineArray[i] !== null){
-        //         if(Math.abs(lineArray[i]) < 10){
-        //             console.log(lineArray[i]); 
-        //         }
-        //     }
-        // }
-        //  console.log(CCI);
-
         // console.log(SIGNAL);
         // console.log(HISTOGRAM);
 
@@ -356,17 +378,20 @@
         var nullRSDELAY = Array(closedPrice.length - DelayRSI.length).fill(null);
         var nullCCI = Array(closedPrice.length - CCI.length).fill(null);
 
+         dataMA5 = calculateMA(5, data);
+         dataMA10 = calculateMA(10, data);
+        //  dataMA20 = calculateMA(20, data);
+
+        console.log(dataMA10);
+
          MacdArr = nullForMACD.concat(MACD); 
          SignalArr = nullForSIGNAL.concat(SIGNAL); 
          HistogramArr = nullForHISTOGRAM.concat(HISTOGRAM); 
          RSIArr = nullRS.concat(RSI); 
          RSIDelayArr = nullRSDELAY.concat(DelayRSI); 
          CCIArr = nullCCI.concat(CCI); 
-         CrossLineArr = genCrossList(closedPrice,getSignChange(HistogramArr)); 
-
-         dataMA5 = calculateMA(5, data);
-         dataMA10 = calculateMA(10, data);
-         dataMA20 = calculateMA(20, data);
+         CrossClosedWithHistogram = crossListCalc(closedPrice,getSignChange(HistogramArr)); 
+         
 
          var hisTogramData = getSignChange(HistogramArr);
          var previousSum = 0;
@@ -379,11 +404,13 @@
          if(firstRun == true){
             numOfCross = hisTogramData.length;
             firstRun = false;
+            coordOfCrossSMA = crossSMA(dataMA5,dataMA10);
          }else{
              if(hisTogramData.length > numOfCross){
                  if(sumHistogram !== 0){
                     previousSum = sumHistogram;
                  }
+                
                 sumHistogram = 0;
                 numOfCross = hisTogramData.length;
                 numOfTick = 1;
@@ -415,10 +442,11 @@
                     }, {
                         name: 'MA10',
                         data: dataMA10,
-                    }, {
-                        name: 'MA20',
-                        data: dataMA20,
                     }
+                    // , {
+                    //     name: 'MA20',
+                    //     data: dataMA20,
+                    // }
                 ],                
                 xAxis : [
                     {
@@ -433,7 +461,7 @@
 
             });
             rsiChart.setOption({
-                series : [//
+                series : [
                     {
                         name:'RSI',
 
@@ -498,26 +526,7 @@
     });
     
     createData(forexData);
-       
-        for (var i = 0; i < HistogramArr.length; i++) {
-            
-            var first = false;
-            var currentSign = null;
-            if(HistogramArr[i] !== null){
-                // console.log(Math.sign(HistogramArr[i])) ;
-                if(first === false){
-                    currentSign = Math.sign(HistogramArr[i]);
-                    first = true;
-                }else{
-                    if(currentSign != Math.sign(HistogramArr[i])){
-                        currentSign = currentSign*-1;
-                    }
-                }
-                // if(Math.abs(HistogramArr[i]) < 10){
-                //     console.log(HistogramArr[i]); 
-                // }
-            }
-        }
+    
 
             option = {
                 backgroundColor: '#21202D',
@@ -539,7 +548,7 @@
                     }
                 },
                 legend: {
-                    data:['USDJYP','MA5', 'MA10', 'MA20'],
+                    data:['USDJYP','MA5', 'MA10'],
                     textStyle: {
                         color: '#fff'
                     }
@@ -589,16 +598,16 @@
                         name:'USDJYP',
                         type:'candlestick',
                         data: data,
-                        markPoint: {
-                            label: {
-                                normal: {
-                                    formatter: function (param) {
-                                        return param != null ? param.data['name'] : '';
-                                    }
-                                }
-                            },
-                            data: CrossLineArr,
-                        },
+                        // markPoint: {
+                        //     label: {
+                        //         normal: {
+                        //             formatter: function (param) {
+                        //                 return param != null ? param.data['name'] : '';
+                        //             }
+                        //         }
+                        //     },
+                        //     data: CrossClosedWithHistogram,
+                        // },
                         itemStyle: {
                             color: upColor,
                             color0: downColor,
@@ -623,16 +632,17 @@
                         lineStyle: {
                             width: 1
                         }
-                    }, {
-                        name: 'MA20',
-                        type: 'line',
-                        data: dataMA20,
-                        smooth: true,
-                        showSymbol: false,
-                        lineStyle: {
-                            width: 1
-                        }
-                    }
+                    }, 
+                    // {
+                    //     name: 'MA20',
+                    //     type: 'line',
+                    //     data: dataMA20,
+                    //     smooth: true,
+                    //     showSymbol: false,
+                    //     lineStyle: {
+                    //         width: 1
+                    //     }
+                    // }
                 ]
             };
 
