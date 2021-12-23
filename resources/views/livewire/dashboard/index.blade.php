@@ -374,11 +374,8 @@
             numOfTick ++;
             histogramIndex ++
             sumHistogram += HistogramArr[histogramIndex]
-           
-            //console.log(HistogramArr[histogramIndex]);
          }
 
-        
          if(firstRun == true){
             numOfCross = hisTogramData.length;
             firstRun = false;
@@ -394,29 +391,15 @@
                 histogramIndex = hisTogramData[hisTogramData.length-1][0]
                 histogramIndex ++;
                 sumHistogram += HistogramArr[histogramIndex]
-                // console.log('previous sum' + ' ' + sumHistogram);
-                // if(sumHistogram < 0){
-                    previousSum += sumHistogram*-1;
-                     console.log('ผลรวม History:' + ' ' + previousSum);
-                // }
+
+                previousSum += sumHistogram*-1;
+                console.log('ผลรวม History:' + ' ' + previousSum);
+
              }
          }
 
          console.log('นับ:' + numOfTick + ' ผลรวม History:' + sumHistogram + ' Macd:' + MacdArr[histogramIndex]);
 
-
-        //  for (var i = 0; i < arr2.length; i++) {
-        //     var label = 'Buy';
-        //     if(arr2[i][1] > arr2[i][2]){
-        //             label = 'Sale';
-        //     }
-        //     _crossList[i] = {
-        //                 name: label,
-        //                 value: arr1[arr2[i][0]+1],
-        //                 xAxis: arr2[i][0],
-        //                 yAxis: arr1[arr2[i][0]+1]
-        //         };
-        // }
     }
 
     document.addEventListener('livewire:load', () =>{
