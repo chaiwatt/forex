@@ -39,18 +39,20 @@
 <div>
     <div class="card ">
         <div class="card-body">
-            <button wire:click="fetchData" type="button" class="btn btn-primary">Refresh</button>
-            {{-- <button wire:poll.500ms="fetchData" type="button" class="btn btn-primary">Refresh</button> --}}
+            {{-- <button wire:click="fetchData" type="button" class="btn btn-primary">Refresh</button> --}}
+            <button wire:poll.500ms="fetchData" type="button" class="btn btn-primary">Refresh</button>
   {{-- {{$numOfFetch}} --}}
-
+            <button lass="btn btn-info" wire:click="$emit('getImage')">Save img</button>
             <div class="row" >
                 <div class="col-12">
                     <div id="canndle_stick_chart"></div>
+                    {{-- <button wire:click="fetchData" type="button" class="btn btn-primary">Refresh</button> --}}
                     <div id="macd_chart"></div>
                     <div id="rsi_chart"></div>
                     <div id="atr_chart"></div>
                     <div id="cci_chart"></div>
                 </div>
+                <img id="captureCandle" src="" alt="">
             </div>
         </div>
       </div>
@@ -58,6 +60,8 @@
 @push('js')
 
 <script>
+    const usdjpyMacdDiff = 0.000586674;
+    const usdjpySumHistogram = 0.002771262;
     var upColor = '#00da3c';
     var downColor = '#ec0000';
     var firstRun = true;
@@ -416,21 +420,33 @@
                  
                  if(onOrder == true){
                     console.log('ขาย' + data[histogramIndex][1]);
+                    Livewire.emit('getImage');
                     console.log('====');
                     onOrder = false;
                  }
 
                  
-                 if(macdAtCross.length > 1){
-                     var diffMacd = Math.abs((macdAtCross[macdAtCross.length-1] - macdAtCross[macdAtCross.length-2]));
-                    // console.log('macd diff: ' + diffMacd );
-                    if(diffMacd > 0.015){
-                        // console.log('macd diff เกิน 0.15 ');
-                        if(numOfTick > 10 && ((sumHistogram-hisTogramData[hisTogramData.length-1][2])*-1)  > 0.03){
-                            onOrder = true;
-                            console.log('ซื้อ' + data[histogramIndex][1]);
-                        }
+                 if(macdAtCross.length > 1){ // หาจุดซื้อ
+                    var totalSum = sumHistogram-hisTogramData[hisTogramData.length-1][2]*-1;
+                    var diffMacd = Math.abs((macdAtCross[macdAtCross.length-1] - macdAtCross[macdAtCross.length-2]));
 
+                    var stdUsdjpyMacdDiff = usdjpyMacdDiff * numOfTick;
+                    var stdUsdjpySumHistogram = usdjpySumHistogram * numOfTick;
+
+                   
+                    if(totalSum < 0){
+
+                        if(numOfTick >= 40){
+                            console.log('tick:'+ numOfTick + ' macd diff:' + diffMacd + ' std Macd diff:' + stdUsdjpyMacdDiff + ' hist sum:' + totalSum  + ' std hist sum:' + stdUsdjpySumHistogram*-1);
+                        }
+                        // console.log('macd diff เกิน 0.15 ');
+                        // const usdjpyMacdDiff = 0.000586674;
+                        // const usdjpySumHistogram = 0.002771262;
+                        if((numOfTick >= 20 && diffMacd  >= stdUsdjpyMacdDiff && totalSum <= (stdUsdjpySumHistogram*-1)) || (numOfTick >= 40 && totalSum <= (stdUsdjpySumHistogram*-1)*0.8) ){
+                            onOrder = true;
+                            // console.log('ซื้อ' + data[histogramIndex][1]);
+                            console.log('ซื้อ Date:'+ axisData[histogramIndex] + ' ราคา:'+ data[histogramIndex][1] +' tick:'+ numOfTick + ' macd diff:' + diffMacd + ' std Macd diff:' + stdUsdjpyMacdDiff + ' hist sum:' + totalSum  + ' std hist sum:' + stdUsdjpySumHistogram*-1);
+                        }
                     }
                  }
              
@@ -468,7 +484,7 @@
              }
          }
         //  if(numOfTick > 10){
-            //  console.log('นับ:' + numOfTick + ' ผลรวม Histogram:' + sumHistogram + ' Macd:' + MacdArr[histogramIndex] + ' HIST:' + HistogramArr[histogramIndex]);
+            // console.log('นับ:' + numOfTick + ' ผลรวม Histogram:' + sumHistogram + ' Macd:' + MacdArr[histogramIndex] + ' HIST:' + HistogramArr[histogramIndex]);
         //  }
          
         //  if(numOfTick > 30 && sumHistogram < -0.12 && MacdArr[histogramIndex] < -0.12){
@@ -478,8 +494,33 @@
 
 
     }
-
+    // function saveImage(){
+    //             var image = document.getElementById('captureCandle'); 
+    //             var img = new Image();
+    //             img.src = canndleStickChart.getDataURL({
+    //                 pixelRatio: 2,
+    //             });
+    //             image.src = img.src;
+    //         }
     document.addEventListener('livewire:load', () =>{
+        Livewire.on('getImage', () => {
+   
+            var img_candlestick = new Image();
+            img_candlestick.src = canndleStickChart.getDataURL({
+                    pixelRatio: 2,
+                });
+
+
+      
+            var img_macd = new Image();
+            img_macd.src = macdChart.getDataURL({
+                    pixelRatio: 2,
+                });
+      
+
+            Livewire.emit('saveImage',img_candlestick.src,img_macd.src);
+        })
+
         @this.on('refreshChart', (chartData) => {
             createData(chartData);
             canndleStickChart.setOption({
@@ -493,10 +534,6 @@
                         name: 'MA10',
                         data: dataMA10,
                     }
-                    // , {
-                    //     name: 'MA20',
-                    //     data: dataMA20,
-                    // }
                 ],                
                 xAxis : [
                     {
@@ -813,8 +850,8 @@
                     }
                 },
                 toolbox: {
-                    y : -30,
-                    show : true,
+                    // y : -30,
+                    show : false,
                     feature : {
                         mark : {show: true},
                         dataZoom : {show: true},
@@ -838,10 +875,9 @@
                 },
                 xAxis : [
                     {
-                        show : false,
                         type : 'category',
-                        position:'top',
-                        // boundaryGap : true,
+                        boundaryGap : true,
+                        axisTick: {onGap:false},
                         splitLine: {show:false},
                         data : axisData
                     }
@@ -985,6 +1021,9 @@
                 macdChart.resize();
                 cciChart.resize();
             }
+
+
+
 
  
     </script>
