@@ -39,8 +39,8 @@
 <div>
     <div class="card ">
         <div class="card-body">
-            {{-- <button wire:click="fetchData" type="button" class="btn btn-primary">Refresh</button> --}}
-            <button wire:poll.500ms="fetchData" type="button" class="btn btn-primary">Refresh</button>
+            <button wire:click="fetchData" type="button" class="btn btn-primary">Refresh</button>
+            {{-- <button wire:poll.100ms="fetchData" type="button" class="btn btn-primary">Refresh</button> --}}
   {{-- {{$numOfFetch}} --}}
             <button lass="btn btn-info" wire:click="$emit('getImage')">Save img</button>
             <div class="row" >
@@ -78,6 +78,7 @@
     var axisData = [];
 
     var MacdArr = [];
+    var AvgMacdArr = [];
     var SignalArr = [];
     var HistogramArr = [];
     var RSIArr = [];
@@ -232,10 +233,10 @@
         var _delayAsi = [];
         _delayAsi = [];
         for (var i = 0; i < rsiArr.length-mRange+1; i++) {
-                var avgRSI = rsiArr.slice(i, mRange+i).reduce((a,c) => a + c, 0) / mRange;
-                _delayAsi.push(avgRSI);
-            }
-            return _delayAsi;
+            var avgRSI = rsiArr.slice(i, mRange+i).reduce((a,c) => a + c, 0) / mRange;
+            _delayAsi.push(avgRSI);
+        }
+        return _delayAsi;
     }
 
     function CCICalc(highArray,lowArray,closeArray,mRange) {
@@ -341,7 +342,16 @@
                 yValue = longSMA[i];
             }
         }
-        console.log('X:'+xValue + ' Y:' + yValue)
+        // console.log('X:'+xValue + ' Y:' + yValue)
+    }
+
+    function everageMacd(macdArr,mRange) {
+        _avgMacd = [];
+        for (var i = 0; i < macdArr.length-mRange+1; i++) {
+            var avgMacd = macdArr.slice(i, mRange+i).reduce((a,c) => a + c, 0) / mRange;
+            _avgMacd.push(avgMacd);
+        }
+        return _avgMacd;
     }
 
         //   var colorList = ['#c23531','#2f4554', '#61a0a8', '#d48265', '#91c7ae','#749f83',  '#ca8622', '#bda29a','#6e7074', '#546570', '#c4ccd3'];
@@ -367,6 +377,7 @@
         EMA12 = EMACalc(closedPrice,12);
         EMA26 = EMACalc(closedPrice,26);
         MACD = MACDCalc(EMA26,EMA12,26,12);
+        AVGMACD = everageMacd(MACD,3);
         SIGNAL = EMACalc(MACD,9);
         HISTOGRAM = HistogramCalc(SIGNAL,MACD,9);
         RSI = RS(closedPrice,14);
@@ -382,12 +393,14 @@
         var nullRS = Array(closedPrice.length - RSI.length).fill(null);
         var nullRSDELAY = Array(closedPrice.length - DelayRSI.length).fill(null);
         var nullCCI = Array(closedPrice.length - CCI.length).fill(null);
+        var nullAVGMACD = Array(closedPrice.length - AVGMACD.length).fill(null);
 
          dataMA5 = calculateMA(5, data);
          dataMA10 = calculateMA(10, data);
         //  dataMA20 = calculateMA(20, data);
 
          MacdArr = nullForMACD.concat(MACD); 
+         AvgMacdArr = nullAVGMACD.concat(AVGMACD); 
          SignalArr = nullForSIGNAL.concat(SIGNAL); 
          HistogramArr = nullForHISTOGRAM.concat(HISTOGRAM); 
          RSIArr = nullRS.concat(RSI); 
@@ -580,6 +593,11 @@
                     },{
                         name:'HISTOGRAM',
                         data: HistogramArr,
+                    },{
+                        name:'MACD AVR',
+                        type:'line',
+                        symbol: 'none',
+                        data: AvgMacdArr,
                     }
                 ],                
                 xAxis : [
@@ -844,7 +862,7 @@
                 },
                 legend: {
                     // y : -30,
-                    data:['MACD','SIGNAL','HISTOGRAM'],
+                    data:['MACD','MACD AVR','SIGNAL','HISTOGRAM'],
                     textStyle: {
                         color: '#fff'
                     }
@@ -907,6 +925,11 @@
                         type:'bar',
                         symbol: 'none',
                         data: HistogramArr,
+                    },{
+                        name:'MACD AVR',
+                        type:'line',
+                        symbol: 'none',
+                        data: AvgMacdArr,
                     }
                 ]
             };
