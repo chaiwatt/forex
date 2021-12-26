@@ -40,7 +40,7 @@
     <div class="card ">
         <div class="card-body">
             <button wire:click="fetchData" type="button" class="btn btn-primary">Refresh</button>
-            {{-- <button wire:poll.100ms="fetchData" type="button" class="btn btn-primary">Refresh</button> --}}
+            {{-- <button wire:poll.200ms="fetchData" type="button" class="btn btn-primary">Refresh</button> --}}
   {{-- {{$numOfFetch}} --}}
             <button lass="btn btn-info" wire:click="$emit('getImage')">Save img</button>
             <div class="row" >
@@ -73,6 +73,9 @@
     var dataMA5 = [];
     var dataMA10 = [];
     var dataMA20 = [];
+    var dataMA50 = [];
+    var dataMA100 = [];
+    var dataMA200 = [];
   
     var data = [];// Open，Close，Low，Hi
     var axisData = [];
@@ -87,6 +90,12 @@
     var CrossClosedWithHistogram = [];
     var onOrder = false;
     var macdAtCross = [];
+    var EMA5Arr = [];
+    var EMA20Arr = [];
+    var EMA50Arr = [];
+    var EMA200Arr = [];
+    var ClosedData = [];
+    var HistogramData = [];
 
     var forexData =  @json($data);
     function getAvgClosedPrice(mArray,mRange){
@@ -354,14 +363,20 @@
         return _avgMacd;
     }
 
+    function StandardDeviationCalc(array) {
+        const n = array.length
+        const mean = array.reduce((a, b) => a + b) / n
+        return Math.sqrt(array.map(x => Math.pow(x - mean, 2)).reduce((a, b) => a + b) / n)
+    }
+
         //   var colorList = ['#c23531','#2f4554', '#61a0a8', '#d48265', '#91c7ae','#749f83',  '#ca8622', '#bda29a','#6e7074', '#546570', '#c4ccd3'];
 
     function createData(_forexData){
         var closedPrice = [];
         var lowPrice = [];
         var highPrice = [];
-        var EMA12 = [];
-        var EMA26 = [];
+        var EMA_SHORT = [];
+        var EMA_LONG = [];
         var MACD = [];
         var SIGNAL = [];
         var HISTOGRAM = [];
@@ -374,10 +389,14 @@
         highPrice = getHighPrice(_forexData);
         axisData = getDateLabel(_forexData); 
         
-        EMA12 = EMACalc(closedPrice,12);
-        EMA26 = EMACalc(closedPrice,26);
-        MACD = MACDCalc(EMA26,EMA12,26,12);
-        AVGMACD = everageMacd(MACD,3);
+        EMA_SHORT = EMACalc(closedPrice,12);
+        EMA_LONG = EMACalc(closedPrice,26);
+        EMA5Arr = EMACalc(closedPrice,5);
+        EMA20Arr = EMACalc(closedPrice,20);
+        EMA50Arr = EMACalc(closedPrice,50);
+        EMA200Arr = EMACalc(closedPrice,200);
+        MACD = MACDCalc(EMA_LONG,EMA_SHORT,26,12);
+        // AVGMACD = everageMacd(MACD,3);
         SIGNAL = EMACalc(MACD,9);
         HISTOGRAM = HistogramCalc(SIGNAL,MACD,9);
         RSI = RS(closedPrice,14);
@@ -393,14 +412,17 @@
         var nullRS = Array(closedPrice.length - RSI.length).fill(null);
         var nullRSDELAY = Array(closedPrice.length - DelayRSI.length).fill(null);
         var nullCCI = Array(closedPrice.length - CCI.length).fill(null);
-        var nullAVGMACD = Array(closedPrice.length - AVGMACD.length).fill(null);
+        // var nullAVGMACD = Array(closedPrice.length - AVGMACD.length).fill(null);
 
          dataMA5 = calculateMA(5, data);
          dataMA10 = calculateMA(10, data);
-        //  dataMA20 = calculateMA(20, data);
+         dataMA20 = calculateMA(20, data);
+         dataMA50 = calculateMA(50, data);
+         dataMA100 = calculateMA(100, data);
+         dataMA200 = calculateMA(200, data);
 
          MacdArr = nullForMACD.concat(MACD); 
-         AvgMacdArr = nullAVGMACD.concat(AVGMACD); 
+        //  AvgMacdArr = nullAVGMACD.concat(AVGMACD); 
          SignalArr = nullForSIGNAL.concat(SIGNAL); 
          HistogramArr = nullForHISTOGRAM.concat(HISTOGRAM); 
          RSIArr = nullRS.concat(RSI); 
@@ -438,32 +460,54 @@
                     onOrder = false;
                  }
 
-                 
-                 if(macdAtCross.length > 1){ // หาจุดซื้อ
-                    var totalSum = sumHistogram-hisTogramData[hisTogramData.length-1][2]*-1;
-                    var diffMacd = Math.abs((macdAtCross[macdAtCross.length-1] - macdAtCross[macdAtCross.length-2]));
 
-                    var stdUsdjpyMacdDiff = usdjpyMacdDiff * numOfTick;
-                    var stdUsdjpySumHistogram = usdjpySumHistogram * numOfTick;
 
+                //  if(macdAtCross.length > 1){ // หาจุดซื้อ
                    
-                    if(totalSum < 0){
+                //     var totalSum = sumHistogram-hisTogramData[hisTogramData.length-1][2]*-1;
+                //     var diffMacd = Math.abs((macdAtCross[macdAtCross.length-1] - macdAtCross[macdAtCross.length-2]));
 
-                        if(numOfTick >= 40){
-                            console.log('tick:'+ numOfTick + ' macd diff:' + diffMacd + ' std Macd diff:' + stdUsdjpyMacdDiff + ' hist sum:' + totalSum  + ' std hist sum:' + stdUsdjpySumHistogram*-1);
-                        }
-                        // console.log('macd diff เกิน 0.15 ');
-                        // const usdjpyMacdDiff = 0.000586674;
-                        // const usdjpySumHistogram = 0.002771262;
-                        if((numOfTick >= 20 && diffMacd  >= stdUsdjpyMacdDiff && totalSum <= (stdUsdjpySumHistogram*-1)) || (numOfTick >= 40 && totalSum <= (stdUsdjpySumHistogram*-1)*0.8) ){
-                            onOrder = true;
-                            // console.log('ซื้อ' + data[histogramIndex][1]);
-                            console.log('ซื้อ Date:'+ axisData[histogramIndex] + ' ราคา:'+ data[histogramIndex][1] +' tick:'+ numOfTick + ' macd diff:' + diffMacd + ' std Macd diff:' + stdUsdjpyMacdDiff + ' hist sum:' + totalSum  + ' std hist sum:' + stdUsdjpySumHistogram*-1);
-                        }
-                    }
-                 }
+                //     var stdUsdjpyMacdDiff = usdjpyMacdDiff * numOfTick;
+                //     var stdUsdjpySumHistogram = usdjpySumHistogram * numOfTick;
+                   
+                //     if(totalSum < 0){
+
+                //         if(numOfTick >= 20){
+                //             console.log('tick:'+ numOfTick + ' macd diff:' + diffMacd + ' std Macd diff:' + stdUsdjpyMacdDiff + ' hist sum:' + totalSum  + ' std hist sum:' + stdUsdjpySumHistogram*-1);
+                //         }
+                //         // console.log('macd diff เกิน 0.15 ');
+                //         // const usdjpyMacdDiff = 0.000586674;
+                //         // const usdjpySumHistogram = 0.002771262;
+                //         if((numOfTick >= 20 && diffMacd  >= stdUsdjpyMacdDiff && totalSum <= (stdUsdjpySumHistogram*-1)) || (numOfTick >= 40 && totalSum <= (stdUsdjpySumHistogram*-1)*0.8) ){
+                //             onOrder = true;
+                //             // console.log('ซื้อ' + data[histogramIndex][1]);
+                //             console.log('ซื้อ Date:'+ axisData[histogramIndex] + ' ราคา:'+ data[histogramIndex][1] +' tick:'+ numOfTick + ' macd diff:' + diffMacd + ' std Macd diff:' + stdUsdjpyMacdDiff + ' hist sum:' + totalSum  + ' std hist sum:' + stdUsdjpySumHistogram*-1);
+                //         }
+                //     }
+                //  }
+
              
 
+                //  if(ClosedData.length > 0 && macdAtCross.length > 1 && numOfTick > 5){
+                //     var totalSum = sumHistogram-hisTogramData[hisTogramData.length-1][2]*-1;
+                //     // console.log(ClosedData);
+                //     var stdv = StandardDeviationCalc(ClosedData);
+                //     console.log("STD: "+ stdv + " tick:" + numOfTick + " total sum:" + totalSum);
+
+                //     if(stdv < 0.015 && totalSum < 0){
+                //         onOrder = true;
+                //             // console.log('ซื้อ' + data[histogramIndex][1]);
+                //             console.log('ซื้อ Date:'+ axisData[histogramIndex] + ' ราคา:'+ data[histogramIndex][1] +' tick:'+ numOfTick + ' macd diff:' + diffMacd + ' std Macd diff:' + stdUsdjpyMacdDiff + ' hist sum:' + totalSum  + ' std hist sum:' + stdUsdjpySumHistogram*-1);
+                //     }
+                   
+
+                //     ClosedData = [];
+                //  }
+
+
+
+                //  HistogramData.push();
+                 
         
    
                 // //  if(numOfTick > 15 && ((sumHistogram-hisTogramData[hisTogramData.length-1][2])*-1)  > 0.06 && (MacdArr[histogramIndex]*-1) > 0.01){
@@ -472,33 +516,60 @@
                 //     console.log('ซื้อ' + data[histogramIndex][1]);
                 //  }
 
-               
-                
-                sumHistogram = 0;
+
                 numOfCross = hisTogramData.length;
-                numOfTick = 1;
+                
                 
                 histogramIndex = hisTogramData[hisTogramData.length-1][0]
-                // console.log('X:'+ histogramIndex + ' Y:' + closedPrice[histogramIndex] );
-                // coordOfCross.push([histogramIndex,closedPrice[histogramIndex]]);
-                
-                // if(coordOfCross.length > 1){
-                //     var deltaX = coordOfCross[coordOfCross.length-1][0] - coordOfCross[coordOfCross.length-2][0];
-                //     var deltaY = coordOfCross[coordOfCross.length-1][1] - coordOfCross[coordOfCross.length-2][1];
-                //     var angleDeg = Math.atan(deltaY/deltaX);
-                //     console.log('dX:'+ coordOfCross[coordOfCross.length-1][0] +'-'+ coordOfCross[coordOfCross.length-2][0] + ' dY:'+ coordOfCross[coordOfCross.length-1][1] +'-'+ coordOfCross[coordOfCross.length-2][1] + ' angle:' + angleDeg);
-                // }
-                histogramIndex ++;
-                sumHistogram += HistogramArr[histogramIndex]
 
-                previousSum += sumHistogram*-1;
+
+                histogramIndex ++;
+                // sumHistogram += HistogramArr[histogramIndex]
+
+                // previousSum += sumHistogram*-1;
+
+
+
+
+                if(HistogramData.length > 0){
+                    var stdUsdjpyMacdDiff = usdjpyMacdDiff * HistogramData.length;
+                    var stdv = StandardDeviationCalc(ClosedData);
+                    // console.log('num tick'+HistogramData.length );
+                    const reducer = (accumulator, curr) => accumulator + curr;
+                    var HistSum = HistogramData.reduce(reducer);
+                    if(HistogramData.length > 10){
+                        console.log("STD: "+ stdv + "HistSum: "+ HistSum + " tick: " + HistogramData.length);
+                    }
+                    
+
+                    if(stdv < 0.07 && HistSum < 0 && HistogramData.length > 15){
+                        onOrder = true;
+                            console.log('ซื้อ' + data[histogramIndex]);
+                            // console.log('ซื้อ Date:'+ axisData[histogramIndex] + ' ราคา:'+ data[histogramIndex][1] +' tick:'+ numOfTick + ' macd diff:' + diffMacd + ' std Macd diff:' + stdUsdjpyMacdDiff + ' hist sum:' + totalSum  + ' std hist sum:' + stdUsdjpySumHistogram*-1);
+                    }
+                    HistogramData = []
+                    ClosedData = [];
+
+                 }
+
+                 numOfTick = 1;
+
+
                 // console.log('ผลรวม History:' + ' ' + previousSum);
+                // ClosedData.push(data[histogramIndex][1]);
 
              }
          }
-        //  if(numOfTick > 10){
+         if(numOfTick !== 0){
             // console.log('นับ:' + numOfTick + ' ผลรวม Histogram:' + sumHistogram + ' Macd:' + MacdArr[histogramIndex] + ' HIST:' + HistogramArr[histogramIndex]);
-        //  }
+            // console.log('current data' + data[histogramIndex]);
+            if(data[histogramIndex] !== null){
+                ClosedData.push(data[histogramIndex][1]);
+                HistogramData.push(HistogramArr[histogramIndex]);
+            }
+     
+            // console.log('histogram in data' + HistogramData);
+         }
          
         //  if(numOfTick > 30 && sumHistogram < -0.12 && MacdArr[histogramIndex] < -0.12){
         //     console.log('buy signal');
@@ -544,8 +615,11 @@
                         name: 'MA5',
                         data: dataMA5,
                     }, {
-                        name: 'MA10',
-                        data: dataMA10,
+                        name: 'MA20',
+                        data: dataMA20,
+                    }, {
+                        name: 'MA50',
+                        data: dataMA50,
                     }
                 ],                
                 xAxis : [
@@ -593,11 +667,6 @@
                     },{
                         name:'HISTOGRAM',
                         data: HistogramArr,
-                    },{
-                        name:'MACD AVR',
-                        type:'line',
-                        symbol: 'none',
-                        data: AvgMacdArr,
                     }
                 ],                
                 xAxis : [
@@ -653,7 +722,7 @@
                     }
                 },
                 legend: {
-                    data:['USDJYP','MA5', 'MA10'],
+                    data:['USDJYP','MA5', 'MA20', 'MA50'],
                     textStyle: {
                         color: '#fff'
                     }
@@ -729,9 +798,18 @@
                             width: 1
                         }
                     }, {
-                        name: 'MA10',
+                        name: 'MA20',
                         type: 'line',
-                        data: dataMA10,
+                        data: dataMA20,
+                        smooth: true,
+                        showSymbol: false,
+                        lineStyle: {
+                            width: 1
+                        }
+                    }, {
+                        name: 'MA50',
+                        type: 'line',
+                        data: dataMA50,
                         smooth: true,
                         showSymbol: false,
                         lineStyle: {
@@ -862,7 +940,7 @@
                 },
                 legend: {
                     // y : -30,
-                    data:['MACD','MACD AVR','SIGNAL','HISTOGRAM'],
+                    data:['MACD','SIGNAL','HISTOGRAM'],
                     textStyle: {
                         color: '#fff'
                     }
@@ -925,11 +1003,6 @@
                         type:'bar',
                         symbol: 'none',
                         data: HistogramArr,
-                    },{
-                        name:'MACD AVR',
-                        type:'line',
-                        symbol: 'none',
-                        data: AvgMacdArr,
                     }
                 ]
             };
