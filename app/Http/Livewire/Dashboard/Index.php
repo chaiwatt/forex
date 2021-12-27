@@ -19,7 +19,7 @@ class Index extends Component
     ];
 
     public function mount(){
-        $this->numOfFetch = 1100;
+        $this->numOfFetch = 2500;
         $this->data = StockData::take($this->numOfFetch)->get()->map(fn($item) => [$item-> date, $item->open, $item->high, $item->low, $item->close]);
         // $this->data = StockData::get()->map(fn($item) => [$item-> date, $item->open, $item->high, $item->low, $item->close]);
         // $this->data = StockData::where('id', '>', 2000)->where('id', '<', 3000)->get()->map(fn($item) => [$item-> date, $item->open, $item->high, $item->low, $item->close]);

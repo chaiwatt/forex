@@ -39,9 +39,9 @@
 <div>
     <div class="card ">
         <div class="card-body">
-            <button wire:click="fetchData" type="button" class="btn btn-primary">Refresh</button>
+            {{-- <button wire:click="fetchData" type="button" class="btn btn-primary">Refresh</button> --}}
             <button onclick="play()" type="button" class="btn btn-primary">Play</button>
-            {{-- <button wire:poll="fetchData" type="button" class="btn btn-primary">Refresh</button> --}}
+            <button wire:poll.200ms="fetchData" type="button" class="btn btn-primary">Refresh</button>
   {{-- {{$numOfFetch}} --}}
             <button lass="btn btn-info" wire:click="$emit('getImage')">Save img</button>
             <div class="row" >
@@ -687,10 +687,7 @@
                         });
                         onOrder = true;
                     }
-                }
-
-
-            
+                } 
             }
 
 
@@ -757,13 +754,20 @@
                             },
                             data: MarkData,
                         },
-                    }, {
+                    }, 
+                    {
                         name: 'MA5',
                         data: dataMA5,
-                    }, {
+                    }, 
+                    {
+                        name: 'MA10',
+                        data: dataMA10,
+                    }, 
+                    {
                         name: 'MA20',
                         data: dataMA20,
-                    }, {
+                    }, 
+                    {
                         name: 'MA50',
                         data: dataMA50,
                     }
@@ -867,7 +871,7 @@
                     }
                 },
                 legend: {
-                    data:['USDJPY','MA5', 'MA20', 'MA50'],
+                    data:['USDJPY','MA5','MA10', 'MA20', 'MA50'],
                     textStyle: {
                         color: '#fff'
                     }
@@ -933,7 +937,8 @@
                             borderColor: null,
                             borderColor0: null
                         },
-                    }, {
+                    }, 
+                    {
                         name: 'MA5',
                         type: 'line',
                         data: dataMA5,
@@ -942,7 +947,18 @@
                         lineStyle: {
                             width: 1
                         }
-                    }, {
+                    }, 
+                    {
+                        name: 'MA10',
+                        type: 'line',
+                        data: dataMA10,
+                        smooth: true,
+                        showSymbol: false,
+                        lineStyle: {
+                            width: 1
+                        }
+                    }, 
+                    {
                         name: 'MA20',
                         type: 'line',
                         data: dataMA20,
