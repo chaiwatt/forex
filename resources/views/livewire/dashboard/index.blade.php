@@ -39,8 +39,8 @@
 <div>
     <div class="card ">
         <div class="card-body">
-            <button wire:click="fetchData" type="button" class="btn btn-primary">Refresh</button>
-            {{-- <button wire:poll.200ms="fetchData" type="button" class="btn btn-primary">Refresh</button> --}}
+            {{-- <button wire:click="fetchData" type="button" class="btn btn-primary">Refresh</button> --}}
+            <button wire:poll.200ms="fetchData" type="button" class="btn btn-primary">Refresh</button>
   {{-- {{$numOfFetch}} --}}
             <button lass="btn btn-info" wire:click="$emit('getImage')">Save img</button>
             <div class="row" >
@@ -294,16 +294,28 @@
         return _lineArray;
     }
 
-    function getSignChange(arr){
+    function getSignChange(arr,macdarr){
         let positive = arr[0] >= 0; 
         return arr.map((item, index) => {
             if ((positive && item < 0 || !positive && item >= 0)) {
                 positive = arr[index] >= 0
                 if(arr[index-1]!==null && item !== null){
-                    return [index-1, arr[index-1], item]
+                    // console.log(macdarr[index]);
+
+                    var isUpTrendUpperMacd = '';
+                    var macdatpoint = macdarr[index];
+                    if(item > 0){
+                        // console.log('up' + " macd" + macdatpoint);
+                        if(macdatpoint < 0){
+                            isUpTrendUpperMacd = 'under';
+                        }else{
+                            isUpTrendUpperMacd = 'above';
+                        }
+                    }
+   
+                    return [index-1, arr[index-1], item,isUpTrendUpperMacd]
                 }
             }
-        
         }).filter(x => x != null);
     }
 
@@ -429,10 +441,11 @@
          RSIArr = nullRS.concat(RSI); 
          RSIDelayArr = nullRSDELAY.concat(DelayRSI); 
          CCIArr = nullCCI.concat(CCI); 
-         CrossClosedWithHistogram = crossListCalc(closedPrice,getSignChange(HistogramArr)); 
-         
+         CrossClosedWithHistogram = crossListCalc(closedPrice,getSignChange(HistogramArr,MacdArr)); 
+        // console.log(HistogramArr[HistogramArr.length-1] + ' sma50:' + dataMA50[dataMA50.length-1] + ' sma20:' + dataMA20[dataMA20.length-1] + ' sma5:' + dataMA5[dataMA5.length-1])
 
-         var hisTogramData = getSignChange(HistogramArr);
+         var hisTogramData = getSignChange(HistogramArr,MacdArr);
+        //  console.log(hisTogramData);
          
          var previousSum = 0;
          if(numOfTick != 0){
@@ -583,21 +596,46 @@
                 HistogramData.push(HistogramArr[histogramIndex]);
                 MacdData.push(MacdArr[histogramIndex]);
                 
+
             }
      
             // console.log('histogram in data:' + HistogramData + ' MACD:' + MacdArr[histogramIndex]);
             // if(MacdArr[histogramIndex] > 0){
             //     console.log('MACD:' + MacdArr[histogramIndex]);
             // }
+
+            if(hisTogramData[hisTogramData.length-1][3] !== ''){
+                // console.log('ขาขึ้นตัด' + hisTogramData[hisTogramData.length-1][3])  ;
+            }else{
+                // console.log('ขาลง')  ;
+            }
            
-            if(HistogramData.length >= 3 ){
+            if(HistogramData.length >= 3 && hisTogramData[hisTogramData.length-1][3] == 'above'){
+                var smaLong = dataMA50[dataMA50.length-1] ;
+                var smaMedium = dataMA20[dataMA20.length-1] ;
+                var smaShort = dataMA5[dataMA5.length-1] ;
+                var smaDiffShortMedium = smaShort-smaMedium;
+                var smaDiffMediumLong = smaMedium-smaLong;
+
+                if((smaDiffShortMedium > 0.015) && (smaDiffMediumLong > 0.015) && (smaDiffShortMedium/smaDiffMediumLong > 0.8) ){
+                    
+                    // console.log('smaDiffShortMedium:' + smaDiffShortMedium + ' smaDiffMediumLong:' + smaDiffMediumLong);
+                    // console.log('========> trend ขาขึ้น');
+                }
+                // else{
+                //     console.log('========> sideway หรือ trend ขาลง');
+                // }
+                
                 if(onOrder === false){
                     if((HistogramData[2]/HistogramData[1] > 2 || HistogramData[3]/HistogramData[1] > 3) && MacdData[2] > 0.005 && hisTogramData[hisTogramData.length-1][2] > 0){
                         console.log('เข้าซื้อ' + data[histogramIndex]);
                         onOrder = true;
+                    }else if(((HistogramData[2] > HistogramData[1]) && (HistogramData[1] > HistogramData[0])) && ((smaDiffShortMedium > 0.015) && (smaDiffMediumLong > 0.015) && (smaDiffShortMedium/smaDiffMediumLong > 0.8)) ){
+                        console.log('smaDiffShortMedium:' + smaDiffShortMedium + ' smaDiffMediumLong:' + smaDiffMediumLong);
+                        console.log('เข้าซื้อจาก trend ขาขึ้น ' + data[histogramIndex] + ' แนะนำให้ปิด manual');
+                        onOrder = true;
                     }
                 }
-
             }
          }
          
