@@ -39,9 +39,9 @@
 <div>
     <div class="card ">
         <div class="card-body">
-            {{-- <button wire:click="fetchData" type="button" class="btn btn-primary">Refresh</button> --}}
+            <button wire:click="fetchData" type="button" class="btn btn-primary">Refresh</button>
             <button onclick="play()" type="button" class="btn btn-primary">Play</button>
-            <button wire:poll="fetchData" type="button" class="btn btn-primary">Refresh</button>
+            {{-- <button wire:poll="fetchData" type="button" class="btn btn-primary">Refresh</button> --}}
   {{-- {{$numOfFetch}} --}}
             <button lass="btn btn-info" wire:click="$emit('getImage')">Save img</button>
             <div class="row" >
@@ -101,6 +101,7 @@
     var ClosedData = [];
     var HistogramData = [];
     var MacdData = [];
+    var MarkData = [];
 
     var forexData =  @json($data);
     function getAvgClosedPrice(mArray,mRange){
@@ -386,6 +387,24 @@
         return Math.sqrt(array.map(x => Math.pow(x - mean, 2)).reduce((a, b) => a + b) / n)
     }
 
+    
+    function markList(arr1){
+        var _crossList = [];
+        for (var i = 0; i < arr2.length; i++) {
+            var label = 'Buy';
+            if(arr2[i][1] > arr2[i][2]){
+                    label = 'Sale';
+            }
+            _crossList[i] = {
+                        name: label,
+                        value: arr1[arr2[i][0]+1],
+                        xAxis: arr2[i][0],
+                        yAxis: arr1[arr2[i][0]+1]
+                };
+        }
+        return _crossList;
+    }
+
         //   var colorList = ['#c23531','#2f4554', '#61a0a8', '#d48265', '#91c7ae','#749f83',  '#ca8622', '#bda29a','#6e7074', '#546570', '#c4ccd3'];
     function createData(_forexData){
         var closedPrice = [];
@@ -445,6 +464,7 @@
          RSIDelayArr = nullRSDELAY.concat(DelayRSI); 
          CCIArr = nullCCI.concat(CCI); 
          CrossClosedWithHistogram = crossListCalc(closedPrice,getSignChange(HistogramArr,MacdArr)); 
+        //  console.log(CrossClosedWithHistogram);
         // console.log(HistogramArr[HistogramArr.length-1] + ' sma50:' + dataMA50[dataMA50.length-1] + ' sma20:' + dataMA20[dataMA20.length-1] + ' sma5:' + dataMA5[dataMA5.length-1])
 
          var hisTogramData = getSignChange(HistogramArr,MacdArr);
@@ -472,12 +492,12 @@
                     // console.log(macdAtCross);
                  }
                  
-                 if(onOrder == true){
-                    console.log('ขาย' + data[histogramIndex][1]);
-                    Livewire.emit('getImage');
-                    console.log('====');
-                    onOrder = false;
-                 }
+                //  if(onOrder == true){
+                //     console.log('ขาย' + data[histogramIndex][1]);
+                //     Livewire.emit('getImage');
+                //     console.log('====');
+                //     onOrder = false;
+                //  }
 
 
 
@@ -613,16 +633,21 @@
                 // console.log('ขาลง')  ;
             }
            
-            if(HistogramData.length >= 3 && hisTogramData[hisTogramData.length-1][3] == 'above'){
-                var smaLong = dataMA50[dataMA50.length-1] ;
-                var smaMedium = dataMA20[dataMA20.length-1] ;
-                var smaShort = dataMA5[dataMA5.length-1] ;
-                var smaDiffShortMedium = smaShort-smaMedium;
-                var smaDiffMediumLong = smaMedium-smaLong;
 
-                if((smaDiffShortMedium > 0.015) && (smaDiffMediumLong > 0.015) && (smaDiffShortMedium/smaDiffMediumLong > 0.8) ){
+            var smaLong = dataMA50[dataMA50.length-1] ;
+            var smaMedium = dataMA20[dataMA20.length-1] ;
+            var smaShort = dataMA5[dataMA5.length-1] ;
+            var smaDiffShortMedium = smaShort-smaMedium;
+            var smaDiffMediumLong = smaMedium-smaLong;
+
+            if(HistogramData.length >= 3 && hisTogramData[hisTogramData.length-1][3] == 'above'){
+       
+
+                if((smaDiffShortMedium > 0.02) && (smaDiffMediumLong > 0.02) && (smaDiffMediumLong/smaDiffShortMedium > 1) ){
                     
                     // console.log('smaDiffShortMedium:' + smaDiffShortMedium + ' smaDiffMediumLong:' + smaDiffMediumLong);
+                    // console.log(HistogramData[2] + " "  + HistogramData[1] + " "  +  HistogramData[0]);
+                    // console.log(smaDiffShortMedium/smaDiffMediumLong);
                     // console.log('========> trend ขาขึ้น');
                 }
                 // else{
@@ -630,16 +655,55 @@
                 // }
                 
                 if(onOrder === false){
-                    if((HistogramData[2]/HistogramData[1] > 2 || HistogramData[3]/HistogramData[1] > 3) && MacdData[2] > 0.005 && hisTogramData[hisTogramData.length-1][2] > 0){
-                        console.log('เข้าซื้อ' + data[histogramIndex]);
-                        onOrder = true;
-                    }else if(((HistogramData[2] > HistogramData[1]) && (HistogramData[1] > HistogramData[0])) && ((smaDiffShortMedium > 0.015) && (smaDiffMediumLong > 0.015) && (smaDiffShortMedium/smaDiffMediumLong > 0.8)) ){
+                    // if((HistogramData[2]/HistogramData[1] > 2 || HistogramData[3]/HistogramData[1] > 3) && MacdData[2] > 0.005 && hisTogramData[hisTogramData.length-1][2] > 0){
+                    //     console.log('เข้าซื้อ' + data[histogramIndex][1]);
+                    //     MarkData.push({
+                    //         name: 'ซื้อ',
+                    //         value: data[histogramIndex][1],
+                    //         xAxis: histogramIndex,
+                    //         yAxis: data[histogramIndex][3]
+                    //     });
+                    //     onOrder = true;
+                    // }else if(((HistogramData[2] > HistogramData[1]) && (HistogramData[1] > HistogramData[0])) && ((smaDiffShortMedium > 0.02) && (smaDiffMediumLong > 0.02) && (smaDiffShortMedium/smaDiffMediumLong > 0.8)) ){
+                    //     console.log('smaDiffShortMedium:' + smaDiffShortMedium + ' smaDiffMediumLong:' + smaDiffMediumLong);
+                    //     console.log('เข้าซื้อจาก trend ขาขึ้น ' + data[histogramIndex][1] + ' แนะนำให้ปิด manual');
+                    //     MarkData.push({
+                    //         name: 'ซื้อ',
+                    //         value: data[histogramIndex][1],
+                    //         xAxis: histogramIndex,
+                    //         yAxis: data[histogramIndex][3]
+                    //     });
+                    //     onOrder = true;
+                    // }
+
+                    if(((HistogramData[2] > HistogramData[1]) && (HistogramData[1] > HistogramData[0])) && ((smaDiffShortMedium > 0.02) && (smaDiffMediumLong > 0.02) && (smaDiffShortMedium/smaDiffMediumLong > 0.8)) ){
                         console.log('smaDiffShortMedium:' + smaDiffShortMedium + ' smaDiffMediumLong:' + smaDiffMediumLong);
-                        console.log('เข้าซื้อจาก trend ขาขึ้น ' + data[histogramIndex] + ' แนะนำให้ปิด manual');
+                        console.log('เข้าซื้อจาก trend ขาขึ้น ' + data[histogramIndex][1] + ' แนะนำให้ปิด manual');
+                        MarkData.push({
+                            name: 'ซื้อ',
+                            value: data[histogramIndex][1],
+                            xAxis: histogramIndex,
+                            yAxis: data[histogramIndex][3]
+                        });
                         onOrder = true;
                     }
                 }
+
+
+            
             }
+
+
+            if(onOrder == true){
+                    console.log('on order');
+                    if(smaDiffShortMedium < 0){
+                        
+                        console.log('ขาย' + data[histogramIndex][1]);
+                        Livewire.emit('getImage');
+                        console.log('====');
+                        onOrder = false;
+                    }
+                 }
          }
          
         //  if(numOfTick > 30 && sumHistogram < -0.12 && MacdArr[histogramIndex] < -0.12){
@@ -681,7 +745,18 @@
             canndleStickChart.setOption({
                 series : [
                     {
+                        name: 'USDJPY',
                         data: data,
+                        markPoint: {
+                            label: {
+                                normal: {
+                                    formatter: function (param) {
+                                        return param != null ? param.data['value'] : '';
+                                    }
+                                }
+                            },
+                            data: MarkData,
+                        },
                     }, {
                         name: 'MA5',
                         data: dataMA5,
@@ -702,7 +777,6 @@
                     start : Math.round((data.length-70)/(data.length)*100),
                     end : 100
                 },
-     
 
             });
             rsiChart.setOption({
@@ -776,7 +850,7 @@
             option = {
                 backgroundColor: '#21202D',
                 title : {
-                    text: 'USDJYP',
+                    text: 'USDJPY',
                     textStyle: {
                         color: '#fff'
                     }
@@ -793,7 +867,7 @@
                     }
                 },
                 legend: {
-                    data:['USDJYP','MA5', 'MA20', 'MA50'],
+                    data:['USDJPY','MA5', 'MA20', 'MA50'],
                     textStyle: {
                         color: '#fff'
                     }
@@ -840,19 +914,19 @@
                 ],
                 series : [
                     {
-                        name:'USDJYP',
+                        name:'USDJPY',
                         type:'candlestick',
                         data: data,
-                        // markPoint: {
-                        //     label: {
-                        //         normal: {
-                        //             formatter: function (param) {
-                        //                 return param != null ? param.data['name'] : '';
-                        //             }
-                        //         }
-                        //     },
-                        //     data: CrossClosedWithHistogram,
-                        // },
+                        markPoint: {
+                            label: {
+                                normal: {
+                                    formatter: function (param) {
+                                        return param != null ? param.data['value'] : '';
+                                    }
+                                }
+                            },
+                            data: MarkData,
+                        },
                         itemStyle: {
                             color: upColor,
                             color0: downColor,
