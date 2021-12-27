@@ -40,7 +40,8 @@
     <div class="card ">
         <div class="card-body">
             {{-- <button wire:click="fetchData" type="button" class="btn btn-primary">Refresh</button> --}}
-            <button wire:poll.200ms="fetchData" type="button" class="btn btn-primary">Refresh</button>
+            <button onclick="play()" type="button" class="btn btn-primary">Play</button>
+            <button wire:poll="fetchData" type="button" class="btn btn-primary">Refresh</button>
   {{-- {{$numOfFetch}} --}}
             <button lass="btn btn-info" wire:click="$emit('getImage')">Save img</button>
             <div class="row" >
@@ -59,7 +60,10 @@
 </div>
 @push('js')
 
+
+
 <script>
+
     const usdjpyMacdDiff = 0.000586674;
     const usdjpySumHistogram = 0.002771262;
     var upColor = '#00da3c';
@@ -383,7 +387,6 @@
     }
 
         //   var colorList = ['#c23531','#2f4554', '#61a0a8', '#d48265', '#91c7ae','#749f83',  '#ca8622', '#bda29a','#6e7074', '#546570', '#c4ccd3'];
-
     function createData(_forexData){
         var closedPrice = [];
         var lowPrice = [];
@@ -1187,7 +1190,11 @@
             }
 
 
-
+        function play() { 
+            var dingdong = new Audio( 
+            'http://localhost/dingdong/dingdong.mp3'); 
+            dingdong.play(); 
+        } 
 
  
     </script>
