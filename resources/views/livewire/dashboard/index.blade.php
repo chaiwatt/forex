@@ -39,9 +39,9 @@
 <div>
     <div class="card ">
         <div class="card-body">
-            {{-- <button wire:click="fetchData" type="button" class="btn btn-primary">Refresh</button> --}}
+            <button wire:click="fetchData" type="button" class="btn btn-primary">Refresh</button>
             <button onclick="play()" type="button" class="btn btn-primary">Play</button>
-            <button wire:poll.200ms="fetchData" type="button" class="btn btn-primary">Refresh</button>
+            {{-- <button wire:poll.200ms="fetchData" type="button" class="btn btn-primary">Refresh</button> --}}
   {{-- {{$numOfFetch}} --}}
             <button lass="btn btn-info" wire:click="$emit('getImage')">Save img</button>
             <div class="row" >
