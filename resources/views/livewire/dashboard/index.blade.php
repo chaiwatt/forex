@@ -677,7 +677,7 @@
                     // }
 
                     if(((HistogramData[2] > HistogramData[1]) && (HistogramData[1] > HistogramData[0])) && ((smaDiffShortMedium > 0.02) && (smaDiffMediumLong > 0.02) && (smaDiffShortMedium/smaDiffMediumLong > 0.8)) ){
-                        console.log('smaDiffShortMedium:' + smaDiffShortMedium + ' smaDiffMediumLong:' + smaDiffMediumLong);
+                        console.log('SMA DiffShortMedium:' + smaDiffShortMedium + ' SMA DiffMediumLong:' + smaDiffMediumLong);
                         console.log('เข้าซื้อจาก trend ขาขึ้น ' + data[histogramIndex][1] + ' แนะนำให้ปิด manual');
                         MarkData.push({
                             name: 'ซื้อ',
