@@ -96,6 +96,7 @@
     var EMA200Arr = [];
     var ClosedData = [];
     var HistogramData = [];
+    var MacdData = [];
 
     var forexData =  @json($data);
     function getAvgClosedPrice(mArray,mRange){
@@ -432,6 +433,7 @@
          
 
          var hisTogramData = getSignChange(HistogramArr);
+         
          var previousSum = 0;
          if(numOfTick != 0){
             numOfTick ++;
@@ -445,6 +447,7 @@
             // coordOfCrossSMA = crossSMA(dataMA5,dataMA10);
          }else{
              if(hisTogramData.length > numOfCross){
+                // console.log(hisTogramData);
                  if(sumHistogram !== 0){
                     previousSum = sumHistogram;
                  }
@@ -531,24 +534,36 @@
 
 
 
-                if(HistogramData.length > 0){
-                    var stdUsdjpyMacdDiff = usdjpyMacdDiff * HistogramData.length;
-                    var stdv = StandardDeviationCalc(ClosedData);
-                    // console.log('num tick'+HistogramData.length );
-                    const reducer = (accumulator, curr) => accumulator + curr;
-                    var HistSum = HistogramData.reduce(reducer);
-                    if(HistogramData.length > 10){
-                        console.log("STD: "+ stdv + "HistSum: "+ HistSum + " tick: " + HistogramData.length);
-                    }
+                // if(HistogramData.length > 0){
+                //     var stdUsdjpyMacdDiff = usdjpyMacdDiff * HistogramData.length;
+                //     var stdv = StandardDeviationCalc(ClosedData);
+                    
+                //     const reducer = (accumulator, curr) => accumulator + curr;
+                //     var HistSum = HistogramData.reduce(reducer);
+                //     if(HistogramData.length > 10){
+                //         console.log("STD: "+ stdv + "HistSum: "+ HistSum + " tick: " + HistogramData.length);
+                //     }
                     
 
-                    if(stdv < 0.07 && HistSum < 0 && HistogramData.length > 15){
-                        onOrder = true;
-                            console.log('ซื้อ' + data[histogramIndex]);
-                            // console.log('ซื้อ Date:'+ axisData[histogramIndex] + ' ราคา:'+ data[histogramIndex][1] +' tick:'+ numOfTick + ' macd diff:' + diffMacd + ' std Macd diff:' + stdUsdjpyMacdDiff + ' hist sum:' + totalSum  + ' std hist sum:' + stdUsdjpySumHistogram*-1);
-                    }
-                    HistogramData = []
-                    ClosedData = [];
+                //     if(stdv < 0.07 && HistSum < 0 && HistogramData.length > 15){
+                //         onOrder = true;
+                //             console.log('ซื้อ' + data[histogramIndex]);
+                            
+                //     }
+                //     HistogramData = []
+                //     ClosedData = [];
+
+                //  }
+
+
+                 if(HistogramData.length > 0){
+
+                    const reducer = (accumulator, curr) => accumulator + curr;
+                    var HistSum = HistogramData.reduce(reducer);
+    
+                    HistogramData = [];
+                    MacdData = [];
+                  
 
                  }
 
@@ -566,9 +581,24 @@
             if(data[histogramIndex] !== null){
                 ClosedData.push(data[histogramIndex][1]);
                 HistogramData.push(HistogramArr[histogramIndex]);
+                MacdData.push(MacdArr[histogramIndex]);
+                
             }
      
-            // console.log('histogram in data' + HistogramData);
+            // console.log('histogram in data:' + HistogramData + ' MACD:' + MacdArr[histogramIndex]);
+            // if(MacdArr[histogramIndex] > 0){
+            //     console.log('MACD:' + MacdArr[histogramIndex]);
+            // }
+           
+            if(HistogramData.length >= 3 ){
+                if(onOrder === false){
+                    if((HistogramData[2]/HistogramData[1] > 2 || HistogramData[3]/HistogramData[1] > 3) && MacdData[2] > 0.005 && hisTogramData[hisTogramData.length-1][2] > 0){
+                        console.log('เข้าซื้อ' + data[histogramIndex]);
+                        onOrder = true;
+                    }
+                }
+
+            }
          }
          
         //  if(numOfTick > 30 && sumHistogram < -0.12 && MacdArr[histogramIndex] < -0.12){
