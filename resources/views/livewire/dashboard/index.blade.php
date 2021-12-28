@@ -48,7 +48,7 @@
             
             {{-- <button wire:poll.500ms="fetchData" type="button" class="btn btn-primary">Refresh</button> --}}
   {{-- {{$numOfFetch}} --}}
-            <button lass="btn btn-info" wire:click="$emit('getImage')">Save img</button>
+            {{-- <button lass="btn btn-info" wire:click="$emit('getImage')">Save img</button> --}}
             <div class="row" >
                 <div class="col-12">
                     <div id="canndle_stick_chart"></div>
