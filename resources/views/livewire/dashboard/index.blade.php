@@ -4,18 +4,23 @@
         #rsi_chart,
         #macd_chart {
             width: 96%;
-            height: 600px;
+            height: 800px;
             margin: 20px;
             padding: 0;
         }
+        #canndle_stick_chart_zoom {
+            margin: 20px;
+            height: 800px;
+            width: 96%;
+        }
         #rsi_chart {
             margin: 20px;
-            height: 400px;
+            height: 800px;
             width: 96%;
         }
         #macd_chart {
             margin: 20px;
-            height: 400px;
+            height: 800px;
             width: 96%;
         }
         /* #atr_chart {
@@ -39,21 +44,23 @@
 <div>
     <div class="card ">
         <div class="card-body">
-            <button wire:click="fetchData" type="button" class="btn btn-primary">Refresh</button>
-            <button onclick="play()" type="button" class="btn btn-primary">Play</button>
-            {{-- <button wire:poll.200ms="fetchData" type="button" class="btn btn-primary">Refresh</button> --}}
+            
+            
+            {{-- <button wire:poll.500ms="fetchData" type="button" class="btn btn-primary">Refresh</button> --}}
   {{-- {{$numOfFetch}} --}}
             <button lass="btn btn-info" wire:click="$emit('getImage')">Save img</button>
             <div class="row" >
                 <div class="col-12">
                     <div id="canndle_stick_chart"></div>
-                    {{-- <button wire:click="fetchData" type="button" class="btn btn-primary">Refresh</button> --}}
+                   
+                    <button wire:click="fetchData" type="button" class="btn btn-primary">Refresh</button>
                     <div id="macd_chart"></div>
-                    <div id="rsi_chart"></div>
-                    <div id="atr_chart"></div>
-                    <div id="cci_chart"></div>
+                    <div id="canndle_stick_chart_zoom">dfgdg</div>
+                    {{-- <div id="rsi_chart"></div> --}}
+                    {{-- <div id="atr_chart"></div>
+                    <div id="cci_chart"></div> --}}
                 </div>
-                <img id="captureCandle" src="" alt="">
+                {{-- <img id="captureCandle" src="" alt=""> --}}
             </div>
         </div>
       </div>
@@ -91,6 +98,17 @@
     var RSIArr = [];
     var RSIDelayArr = [];
     var CCIArr = [];
+    var SSMA5Arr = [];
+    var SSMA8Arr = [];
+    var SSMA13Arr = [];
+    var SSMA20Arr = [];
+    var SSMA50Arr = [];
+    var SSMA100Arr = [];
+    var Smoth_SSMA5Arr = [];
+    var Smoth_SSMA8Arr = [];
+    var Smoth_SSMA13Arr = [];
+    var Smoth_SSMA20Arr = [];
+    var Smoth_SSMA50Arr = [];
     var CrossClosedWithHistogram = [];
     var onOrder = false;
     var macdAtCross = [];
@@ -328,15 +346,17 @@
     function crossListCalc(arr1,arr2){
         var _crossList = [];
         for (var i = 0; i < arr2.length; i++) {
-            var label = 'Buy';
+            var label = 'ซื้อ';
             if(arr2[i][1] > arr2[i][2]){
-                    label = 'Sale';
+                    label = 'ขาย';
             }
             _crossList[i] = {
                         name: label,
                         value: arr1[arr2[i][0]+1],
                         xAxis: arr2[i][0],
-                        yAxis: arr1[arr2[i][0]+1]
+                        yAxis: arr1[arr2[i][0]+1],
+                        color: '#000'
+                       
                 };
         }
         return _crossList;
@@ -391,18 +411,43 @@
     function markList(arr1){
         var _crossList = [];
         for (var i = 0; i < arr2.length; i++) {
-            var label = 'Buy';
+            var label = 'ซื้อ';
             if(arr2[i][1] > arr2[i][2]){
-                    label = 'Sale';
+                    label = 'ขาย';
             }
             _crossList[i] = {
                         name: label,
                         value: arr1[arr2[i][0]+1],
                         xAxis: arr2[i][0],
-                        yAxis: arr1[arr2[i][0]+1]
+                        yAxis: arr1[arr2[i][0]+1],
+                        color: '#000'
                 };
         }
         return _crossList;
+    }
+
+    function SSMA_Calc(arr,n){
+        var ssma = [];
+        ssma.push(avarageSum(arr,n));
+
+        for (var i = 1 ; i < arr.length ; i++){
+            ssma.push((ssma[i-1]*(n-1) + arr[i])/n);
+        }
+        return ssma;
+
+        function avarageSum(arr,n){
+            var temp = arr.slice(0, n);
+            return temp.reduce(function(a,b){return a+b;})/temp.length;
+        }
+    }
+
+    function SSMA_BARESMOTH(arrSSMA,mRange) {
+        _ssmaSmoth = [];
+        for (var i = 0; i < arrSSMA.length-mRange+1; i++) {
+            var ssmaSmoth = arrSSMA.slice(i, mRange+i).reduce((a,c) => a + c, 0) / mRange;
+            _ssmaSmoth.push(ssmaSmoth);
+        }
+        return _ssmaSmoth;
     }
 
         //   var colorList = ['#c23531','#2f4554', '#61a0a8', '#d48265', '#91c7ae','#749f83',  '#ca8622', '#bda29a','#6e7074', '#546570', '#c4ccd3'];
@@ -431,12 +476,25 @@
         EMA50Arr = EMACalc(closedPrice,50);
         EMA200Arr = EMACalc(closedPrice,200);
         MACD = MACDCalc(EMA_LONG,EMA_SHORT,26,12);
+        SSMA5Arr = SSMA_Calc(closedPrice,5);
+        SSMA8Arr = SSMA_Calc(closedPrice,8);
+        SSMA13Arr = SSMA_Calc(closedPrice,13);
+        SSMA20Arr = SSMA_Calc(closedPrice,20);
+        SSMA50Arr = SSMA_Calc(closedPrice,50);
+
+        Smoth_SSMA5 = SSMA_BARESMOTH(SSMA5Arr,3);
+        Smoth_SSMA8 = SSMA_BARESMOTH(SSMA8Arr,3);
+        Smoth_SSMA13 = SSMA_BARESMOTH(SSMA13Arr,3);
+        Smoth_SSMA20 = SSMA_BARESMOTH(SSMA20Arr,3);
+        Smoth_SSMA50 = SSMA_BARESMOTH(SSMA50Arr,3);
+      
+        // SSMA100Arr = SSMA_Calc(closedPrice,100);
         // AVGMACD = everageMacd(MACD,3);
         SIGNAL = EMACalc(MACD,9);
         HISTOGRAM = HistogramCalc(SIGNAL,MACD,9);
-        RSI = RS(closedPrice,14);
-        DelayRSI = delayRSI(RSI,5);
-        CCI = CCICalc(highPrice,lowPrice,closedPrice,20);
+        // RSI = RS(closedPrice,14);
+        // DelayRSI = delayRSI(RSI,5);
+        // CCI = CCICalc(highPrice,lowPrice,closedPrice,20);
         
         // console.log(SIGNAL);
         // console.log(HISTOGRAM);
@@ -444,10 +502,17 @@
         var nullForMACD = Array(closedPrice.length - MACD.length).fill(null);
         var nullForSIGNAL = Array(closedPrice.length - SIGNAL.length).fill(null);
         var nullForHISTOGRAM = Array(closedPrice.length - HISTOGRAM.length).fill(null);
-        var nullRS = Array(closedPrice.length - RSI.length).fill(null);
-        var nullRSDELAY = Array(closedPrice.length - DelayRSI.length).fill(null);
-        var nullCCI = Array(closedPrice.length - CCI.length).fill(null);
+        // var nullRS = Array(closedPrice.length - RSI.length).fill(null);
+        // var nullRSDELAY = Array(closedPrice.length - DelayRSI.length).fill(null);
+        // var nullCCI = Array(closedPrice.length - CCI.length).fill(null);
         // var nullAVGMACD = Array(closedPrice.length - AVGMACD.length).fill(null);
+        var nullSmoth_SSMA5 = Array(closedPrice.length - Smoth_SSMA5.length).fill(null);
+        var nullSmoth_SSMA8 = Array(closedPrice.length - Smoth_SSMA8.length).fill(null);
+        var nullSmoth_SSMA13 = Array(closedPrice.length - Smoth_SSMA13.length).fill(null);
+        var nullSmoth_SSMA20 = Array(closedPrice.length - Smoth_SSMA20.length).fill(null);
+        var nullSmoth_SSMA50 = Array(closedPrice.length - Smoth_SSMA50.length).fill(null);
+
+        // console.log(SIGNAL);
 
          dataMA5 = calculateMA(5, data);
          dataMA10 = calculateMA(10, data);
@@ -460,14 +525,23 @@
         //  AvgMacdArr = nullAVGMACD.concat(AVGMACD); 
          SignalArr = nullForSIGNAL.concat(SIGNAL); 
          HistogramArr = nullForHISTOGRAM.concat(HISTOGRAM); 
-         RSIArr = nullRS.concat(RSI); 
-         RSIDelayArr = nullRSDELAY.concat(DelayRSI); 
-         CCIArr = nullCCI.concat(CCI); 
+
+         Smoth_SSMA5Arr = nullSmoth_SSMA5.concat(Smoth_SSMA5); 
+         Smoth_SSMA8Arr = nullSmoth_SSMA8.concat(Smoth_SSMA8); 
+         Smoth_SSMA13Arr = nullSmoth_SSMA13.concat(Smoth_SSMA13); 
+         Smoth_SSMA20Arr = nullSmoth_SSMA20.concat(Smoth_SSMA20); 
+         Smoth_SSMA50Arr = nullSmoth_SSMA8.concat(Smoth_SSMA50); 
+
+
+        //  RSIArr = nullRS.concat(RSI); 
+        //  RSIDelayArr = nullRSDELAY.concat(DelayRSI); 
+        //  CCIArr = nullCCI.concat(CCI); 
          CrossClosedWithHistogram = crossListCalc(closedPrice,getSignChange(HistogramArr,MacdArr)); 
         //  console.log(CrossClosedWithHistogram);
         // console.log(HistogramArr[HistogramArr.length-1] + ' sma50:' + dataMA50[dataMA50.length-1] + ' sma20:' + dataMA20[dataMA20.length-1] + ' sma5:' + dataMA5[dataMA5.length-1])
 
          var hisTogramData = getSignChange(HistogramArr,MacdArr);
+        
         //  console.log(hisTogramData);
          
          var previousSum = 0;
@@ -492,12 +566,22 @@
                     // console.log(macdAtCross);
                  }
                  
-                //  if(onOrder == true){
-                //     console.log('ขาย' + data[histogramIndex][1]);
-                //     Livewire.emit('getImage');
-                //     console.log('====');
-                //     onOrder = false;
-                //  }
+                 if(onOrder == true){
+                    console.log('ขาย' + data[histogramIndex][1]);
+                    Livewire.emit('getImage');
+                    console.log('====');
+                    onOrder = false;
+
+                    MarkData.push({
+                        name: "ขาย",
+                        value: data[histogramIndex][1],
+                        xAxis: histogramIndex,
+                        yAxis: data[histogramIndex][3],
+                        color: "#000",
+                    });
+                 }
+
+                
 
 
 
@@ -628,9 +712,9 @@
             // }
 
             if(hisTogramData[hisTogramData.length-1][3] !== ''){
-                // console.log('ขาขึ้นตัด' + hisTogramData[hisTogramData.length-1][3])  ;
+                console.log('ขาขึ้นตัด' + hisTogramData[hisTogramData.length-1][3])  ;
             }else{
-                // console.log('ขาลง')  ;
+                console.log('ขาลง')  ;
             }
            
 
@@ -655,17 +739,30 @@
                 // }
                 
                 if(onOrder === false){
-                    // if((HistogramData[2]/HistogramData[1] > 2 || HistogramData[3]/HistogramData[1] > 3) && MacdData[2] > 0.005 && hisTogramData[hisTogramData.length-1][2] > 0){
-                    //     console.log('เข้าซื้อ' + data[histogramIndex][1]);
-                    //     MarkData.push({
-                    //         name: 'ซื้อ',
-                    //         value: data[histogramIndex][1],
-                    //         xAxis: histogramIndex,
-                    //         yAxis: data[histogramIndex][3]
-                    //     });
-                    //     onOrder = true;
-                    // }else if(((HistogramData[2] > HistogramData[1]) && (HistogramData[1] > HistogramData[0])) && ((smaDiffShortMedium > 0.02) && (smaDiffMediumLong > 0.02) && (smaDiffShortMedium/smaDiffMediumLong > 0.8)) ){
-                    //     console.log('smaDiffShortMedium:' + smaDiffShortMedium + ' smaDiffMediumLong:' + smaDiffMediumLong);
+                    if((HistogramData[2]/HistogramData[1] > 2 || HistogramData[3]/HistogramData[1] > 3) && MacdData[2] > 0.005 && hisTogramData[hisTogramData.length-1][2] > 0){
+                        console.log('เข้าซื้อ' + data[histogramIndex][1]);
+                        MarkData.push({
+                            name: "ซื้อ",
+                            value: data[histogramIndex][1],
+                            xAxis: histogramIndex,
+                            yAxis: data[histogramIndex][3]
+                        });
+                        onOrder = true;
+                    }else if(((HistogramData[2] > HistogramData[1]) && (HistogramData[1] > HistogramData[0])) && ((smaDiffShortMedium > 0.02) && (smaDiffMediumLong > 0.02) && (smaDiffShortMedium/smaDiffMediumLong > 0.8)) ){
+                        // console.log('smaDiffShortMedium:' + smaDiffShortMedium + ' smaDiffMediumLong:' + smaDiffMediumLong);
+                        // console.log('เข้าซื้อจาก trend ขาขึ้น ' + data[histogramIndex][1] + ' แนะนำให้ปิด manual');
+                        // MarkData.push({
+                        //     name: "ซื้อ",
+                        //     value: data[histogramIndex][1],
+                        //     xAxis: histogramIndex,
+                        //     yAxis: data[histogramIndex][3],
+                        //     color: "#fff",
+                        // });
+                        // onOrder = true;
+                    }
+
+                    // if(((HistogramData[2] > HistogramData[1]) && (HistogramData[1] > HistogramData[0])) && ((smaDiffShortMedium > 0.02) && (smaDiffMediumLong > 0.02) && (smaDiffShortMedium/smaDiffMediumLong > 0.8)) ){
+                    //     console.log('SMA DiffShortMedium:' + smaDiffShortMedium + ' SMA DiffMediumLong:' + smaDiffMediumLong);
                     //     console.log('เข้าซื้อจาก trend ขาขึ้น ' + data[histogramIndex][1] + ' แนะนำให้ปิด manual');
                     //     MarkData.push({
                     //         name: 'ซื้อ',
@@ -675,32 +772,27 @@
                     //     });
                     //     onOrder = true;
                     // }
-
-                    if(((HistogramData[2] > HistogramData[1]) && (HistogramData[1] > HistogramData[0])) && ((smaDiffShortMedium > 0.02) && (smaDiffMediumLong > 0.02) && (smaDiffShortMedium/smaDiffMediumLong > 0.8)) ){
-                        console.log('SMA DiffShortMedium:' + smaDiffShortMedium + ' SMA DiffMediumLong:' + smaDiffMediumLong);
-                        console.log('เข้าซื้อจาก trend ขาขึ้น ' + data[histogramIndex][1] + ' แนะนำให้ปิด manual');
-                        MarkData.push({
-                            name: 'ซื้อ',
-                            value: data[histogramIndex][1],
-                            xAxis: histogramIndex,
-                            yAxis: data[histogramIndex][3]
-                        });
-                        onOrder = true;
-                    }
                 } 
             }
 
 
-            if(onOrder == true){
-                    console.log('on order');
-                    if(smaDiffShortMedium < 0){
-                        
-                        console.log('ขาย' + data[histogramIndex][1]);
-                        Livewire.emit('getImage');
-                        console.log('====');
-                        onOrder = false;
-                    }
-                 }
+            // if(onOrder == true){
+            //     console.log('on order');
+            //     if(smaDiffShortMedium < 0){
+                    
+            //         console.log('ขาย' + data[histogramIndex][1]);
+            //         Livewire.emit('getImage');
+            //         MarkData.push({
+            //             name: "ขาย",
+            //             value: data[histogramIndex][1],
+            //             xAxis: histogramIndex,
+            //             yAxis: data[histogramIndex][3],
+            //             color: "#000",
+            //         });
+            //         console.log('====');
+            //         onOrder = false;
+            //     }
+            // }
          }
          
         //  if(numOfTick > 30 && sumHistogram < -0.12 && MacdArr[histogramIndex] < -0.12){
@@ -748,7 +840,7 @@
                             label: {
                                 normal: {
                                     formatter: function (param) {
-                                        return param != null ? param.data['value'] : '';
+                                        return param != null ? param.data['name'] : '';
                                     }
                                 }
                             },
@@ -756,21 +848,22 @@
                         },
                     }, 
                     {
-                        name: 'MA5',
-                        data: dataMA5,
+                        name: 'SSMA20',
+                        data: Smoth_SSMA20Arr,
+                    },
+                    {
+                        name: 'SSMA5',
+                        data: Smoth_SSMA5Arr,
                     }, 
                     {
-                        name: 'MA10',
-                        data: dataMA10,
+                        name: 'SSMA8',
+                        data: Smoth_SSMA8Arr,
                     }, 
                     {
-                        name: 'MA20',
-                        data: dataMA20,
-                    }, 
-                    {
-                        name: 'MA50',
-                        data: dataMA50,
+                        name: 'SSMA13',
+                        data: Smoth_SSMA13Arr,
                     }
+                    // 
                 ],                
                 xAxis : [
                     {
@@ -783,16 +876,25 @@
                 },
 
             });
-            rsiChart.setOption({
+            canndleStickChartZoom.setOption({
                 series : [
                     {
-                        name:'RSI',
-
-                        data: RSIArr,
-                    },
+                        name: 'USDJPYZOOM',
+                        data: data,
+                        markPoint: {
+                            label: {
+                                normal: {
+                                    formatter: function (param) {
+                                        return param != null ? param.data['name'] : '';
+                                    }
+                                }
+                            },
+                            data: MarkData,
+                        },
+                    }, 
                     {
-                        name:'RSIDELAY',
-                        data: RSIDelayArr,
+                        name: 'MA100',
+                        data: dataMA100,
                     }
                 ],                
                 xAxis : [
@@ -801,9 +903,10 @@
                     }
                 ],
                 dataZoom : {
-                    start : Math.round((data.length-70)/(data.length)*100),
+                    start : Math.round((data.length-300)/(data.length)*100),
                     end : 100
                 },
+
             });
             macdChart.setOption({
                 series : [
@@ -828,23 +931,45 @@
                     end : 100
                 },
             });
-            cciChart.setOption({
-                series : [
-                    {
-                        name:'CCI',
-                        data: CCIArr,
-                    }
-                ],                
-                xAxis : [
-                    {
-                        data : axisData
-                    }
-                ],
-                dataZoom : {
-                    start : Math.round((data.length-70)/(data.length)*100),
-                    end : 100
-                },
-            });
+            // rsiChart.setOption({
+            //     series : [
+            //         {
+            //             name:'RSI',
+
+            //             data: RSIArr,
+            //         },
+            //         {
+            //             name:'RSIDELAY',
+            //             data: RSIDelayArr,
+            //         }
+            //     ],                
+            //     xAxis : [
+            //         {
+            //             data : axisData
+            //         }
+            //     ],
+            //     dataZoom : {
+            //         start : Math.round((data.length-70)/(data.length)*100),
+            //         end : 100
+            //     },
+            // });
+            // cciChart.setOption({
+            //     series : [
+            //         {
+            //             name:'CCI',
+            //             data: CCIArr,
+            //         }
+            //     ],                
+            //     xAxis : [
+            //         {
+            //             data : axisData
+            //         }
+            //     ],
+            //     dataZoom : {
+            //         start : Math.round((data.length-70)/(data.length)*100),
+            //         end : 100
+            //     },
+            // });
         });
     });
     
@@ -871,7 +996,8 @@
                     }
                 },
                 legend: {
-                    data:['USDJPY','MA5','MA10', 'MA20', 'MA50'],
+                    data:['USDJPY','SSMA20', 'SSMA5','SSMA8','SSMA13'],
+                    selected:{'SSMA20':false},
                     textStyle: {
                         color: '#fff'
                     }
@@ -879,10 +1005,10 @@
                 toolbox: {
                     show : true,
                     feature : {
-                        mark : {show: true},
-                        dataZoom : {show: true},
-                        magicType : {show: true, type: ['line', 'bar']},
-                        restore : {show: true},
+                        // mark : {show: true},
+                        // dataZoom : {show: true},
+                        // magicType : {show: true, type: ['line', 'bar']},
+                        // restore : {show: true},
                         saveAsImage : {show: true}
                     }
                 },            
@@ -925,7 +1051,7 @@
                             label: {
                                 normal: {
                                     formatter: function (param) {
-                                        return param != null ? param.data['value'] : '';
+                                        return param != null ? param.data['name'] : '';
                                     }
                                 }
                             },
@@ -939,44 +1065,42 @@
                         },
                     }, 
                     {
-                        name: 'MA5',
+                        name: 'SSMA20',
                         type: 'line',
-                        data: dataMA5,
-                        smooth: true,
-                        showSymbol: false,
-                        lineStyle: {
-                            width: 1
-                        }
-                    }, 
-                    {
-                        name: 'MA10',
-                        type: 'line',
-                        data: dataMA10,
-                        smooth: true,
-                        showSymbol: false,
-                        lineStyle: {
-                            width: 1
-                        }
-                    }, 
-                    {
-                        name: 'MA20',
-                        type: 'line',
-                        data: dataMA20,
+                        data: Smoth_SSMA20Arr,
                         smooth: true,
                         showSymbol: false,
                         lineStyle: {
                             width: 1
                         }
                     }, {
-                        name: 'MA50',
+                        name: 'SSMA5',
                         type: 'line',
-                        data: dataMA50,
+                        data: Smoth_SSMA5Arr,
                         smooth: true,
                         showSymbol: false,
                         lineStyle: {
                             width: 1
                         }
-                    }, 
+                    }, {
+                        name: 'SSMA8',
+                        type: 'line',
+                        data: Smoth_SSMA8Arr,
+                        smooth: true,
+                        showSymbol: false,
+                        lineStyle: {
+                            width: 1
+                        }
+                    }, {
+                        name: 'SSMA13',
+                        type: 'line',
+                        data: Smoth_SSMA13Arr,
+                        smooth: true,
+                        showSymbol: false,
+                        lineStyle: {
+                            width: 1
+                        }
+                    },
                     // {
                     //     name: 'MA20',
                     //     type: 'line',
@@ -990,49 +1114,59 @@
                 ]
             };
 
-            option_rsi = {
+            option_zoom = {
                 backgroundColor: '#21202D',
+                title : {
+                    text: 'USDJPY',
+                    textStyle: {
+                        color: '#fff'
+                    }
+                },
                 tooltip : {
                     trigger: 'axis',
-                    showDelay: 0             // delay ms
+                    showDelay: 0,             // delay ms
+                    formatter: function (params) {
+                        var res = params[0].name;
+                        res += '<br/>' + params[0].seriesName;
+                        res += '<br/>  Open : ' + params[0].value[1] + '  High : ' + params[0].value[4];
+                        res += '<br/>  Close : ' + params[0].value[2] + '  Low : ' + params[0].value[3];
+                        return res;
+                    }
                 },
                 legend: {
-                    // y : -30,
-                    data:['RSI','RSIDELAY'],
+                    data:['USDJPYZOOM','MA100'],
                     textStyle: {
                         color: '#fff'
                     }
                 },
                 toolbox: {
-                    y : -30,
                     show : true,
                     feature : {
-                        mark : {show: true},
-                        dataZoom : {show: true},
-                        dataView : {show: true, readOnly: false},
-                        magicType : {show: true, type: ['line', 'bar']},
-                        restore : {show: true},
+                        // mark : {show: true},
+                        // dataZoom : {show: true},
+                        // magicType : {show: true, type: ['line', 'bar']},
+                        // restore : {show: true},
                         saveAsImage : {show: true}
                     }
-                },
+                },            
                 dataZoom : {
+                    y: 250,
                     show : false,
                     realtime: true,
-                    start : Math.round((data.length-70)/(data.length)*100),
+                    start : Math.round((data.length-300)/(data.length)*100),
                     end : 100
                 },
                 grid: {
-                    x: 80,
-                    y: 20,
-                    x2: 20,
-                    y2: 60
+                    left: 80,
+                    top: 40,
+                    right: 20,
+                    bottom: 85
                 },
                 xAxis : [
                     {
-                        show : false,
                         type : 'category',
-                        position:'top',
-                        // boundaryGap : true,
+                        boundaryGap : true,
+                        axisTick: {onGap:false},
                         splitLine: {show:false},
                         data : axisData
                     }
@@ -1041,54 +1175,41 @@
                     {
                         type : 'value',
                         scale:true,
-                        splitNumber: 3,
                         boundaryGap: [0.05, 0.05],
-                        // axisLabel: {
-                        //     formatter: function (v) {
-                        //         return Math.round(v/10000) + ' 万'
-                        //     }
-                        // },
                         splitArea : {show : true}
                     }
                 ],
-                series : [//
+                series : [
                     {
-                        name:'RSI',
-                        type:'line',
-                        symbol: 'none',
-                        data: RSIArr,
-                        markLine : {
-                            symbol : 'none',
-                            itemStyle : {
-                                normal : {
-                                    color:'#1e90ff',
-                                    label : {
-                                        show:true
+                        name:'USDJPYZOOM',
+                        type:'candlestick',
+                        data: data,
+                        markPoint: {
+                            label: {
+                                normal: {
+                                    formatter: function (param) {
+                                        return param != null ? param.data['name'] : '';
                                     }
                                 }
                             },
-                            data : [
-                                { 
-                                    name: 'Sell', 
-                                    yAxis: 70,
-                                    lineStyle: {
-                                        color: '#14b143'
-                                    },
-                                },{ 
-                                    name: 'Buy', 
-                                    yAxis: 30,
-                                    lineStyle: {
-                                        color: '#ef232a'
-                                    },
-                                }
-                            ]
-                        }
-                    },
+                            data: MarkData,
+                        },
+                        itemStyle: {
+                            color: upColor,
+                            color0: downColor,
+                            borderColor: null,
+                            borderColor0: null
+                        },
+                    }, 
                     {
-                        name:'RSIDELAY',
-                        type:'line',
-                        symbol: 'none',
-                        data: RSIDelayArr,
+                        name: 'MA100',
+                        type: 'line',
+                        data: dataMA100,
+                        smooth: true,
+                        showSymbol: false,
+                        lineStyle: {
+                            width: 1
+                        }
                     }
                 ]
             };
@@ -1106,24 +1227,65 @@
                         color: '#fff'
                     }
                 },
-                toolbox: {
-                    // y : -30,
-                    show : false,
-                    feature : {
-                        mark : {show: true},
-                        dataZoom : {show: true},
-                        dataView : {show: true, readOnly: false},
-                        magicType : {show: true, type: ['line', 'bar']},
-                        restore : {show: true},
-                        saveAsImage : {show: true}
-                    }
-                },
-                dataZoom : {
-                    show : false,
-                    realtime: true,
-                    start : Math.round((data.length-70)/(data.length)*100),
-                    end : 100
-                },
+                // toolbox: {
+                //     y : -30,
+                //     show : false,
+                //     feature : {
+                //         mark : {show: true},
+                //         dataZoom : {show: true},
+                //         dataView : {show: true, readOnly: false},
+                //         magicType : {show: true, type: ['line', 'bar']},
+                //         restore : {show: true},
+                //         saveAsImage : {show: true}
+                //     }
+                // },
+                dataZoom : 
+                    {
+                        show : true,
+                        realtime: true,
+                        start : Math.round((data.length-70)/(data.length)*100),
+                        end : 100,
+                        handleIcon: 'M10.7,11.9v-1.3H9.3v1.3c-4.9,0.3-8.8,4.4-8.8,9.4c0,5,3.9,9.1,8.8,9.4v1.3h1.3v-1.3c4.9-0.3,8.8-4.4,8.8-9.4C19.5,16.3,15.6,12.2,10.7,11.9z M13.3,24.4H6.7V23h6.6V24.4z M13.3,19.6H6.7v-1.4h6.6V19.6z',
+                        handleSize: '80%',
+                        textStyle: {
+                            color: '#fff'
+                        },
+                        handleStyle: {
+                            color: '#fff',
+                            shadowBlur: 3,
+                            shadowColor: 'rgba(0, 0, 0, 0.6)',
+                            shadowOffsetX: 2,
+                            shadowOffsetY: 2
+                        }
+                    },
+                // dataZoom: [
+                    
+                //         {
+                //         textStyle: {
+                //             color: '#8392A5'
+                //         },
+                        
+                //         handleIcon: 'M10.7,11.9v-1.3H9.3v1.3c-4.9,0.3-8.8,4.4-8.8,9.4c0,5,3.9,9.1,8.8,9.4v1.3h1.3v-1.3c4.9-0.3,8.8-4.4,8.8-9.4C19.5,16.3,15.6,12.2,10.7,11.9z M13.3,24.4H6.7V23h6.6V24.4z M13.3,19.6H6.7v-1.4h6.6V19.6z',
+                //         handleSize: '80%',
+                //         dataBackground: {
+                //             areaStyle: {
+                //                 color: '#8392A5'
+                //             },
+                //             lineStyle: {
+                //                 opacity: 0.8,
+                //                 color: '#8392A5'
+                //             }
+                //         },
+                //         handleStyle: {
+                //             color: '#fff',
+                //             shadowBlur: 3,
+                //             shadowColor: 'rgba(0, 0, 0, 0.6)',
+                //             shadowOffsetX: 2,
+                //             shadowOffsetY: 2
+                //         }
+                //     }, {
+                //         type: 'inside'
+                //     }],
                 grid: {
                     x: 80,
                     y: 20,
@@ -1168,115 +1330,221 @@
                 ]
             };
 
-            option_CCI = {
-                backgroundColor: '#21202D',
-                tooltip : {
-                    trigger: 'axis',
-                    showDelay: 0             // delay ms
-                },
-                legend: {
-                    data:['CCI'],
-                    textStyle: {
-                        color: '#fff'
-                    }
-                },
-                toolbox: {
-                    y : -30,
-                    show : true,
-                    feature : {
-                        mark : {show: true},
-                        dataZoom : {show: true},
-                        dataView : {show: true, readOnly: false},
-                        magicType : {show: true, type: ['line', 'bar']},
-                        restore : {show: true},
-                        saveAsImage : {show: true}
-                    }
-                },
-                dataZoom : {
-                    bottom: 5,
-                    show : true,
-                    realtime: true,
-                    start : Math.round((data.length-70)/(data.length)*100),
-                    end : 100
-                },
-                grid: {
-                    x: 80,
-                    y: 20,
-                    x2: 20,
-                    y2: 80
-                },
-                xAxis : [
-                    {
-                        show : false,
-                        type : 'category',
-                        position:'top',
-                        // boundaryGap : true,
-                        splitLine: {show:false},
-                        data : axisData
-                    }
-                ],
-                yAxis : [
-                    {
-                        type : 'value',
-                        scale:true,
-                        splitNumber: 3,
-                        boundaryGap: [0.05, 0.05],
-                        splitArea : {show : true}
-                    }
-                ],
-                series : [
-                    {
-                        name:'CCI',
-                        type:'line',
-                        symbol: 'none',
-                        data: CCIArr,
-                        markLine : {
-                            symbol : 'none',
-                            itemStyle : {
-                                normal : {
-                                    color:'#1e90ff',
-                                    label : {
-                                        show:true
-                                    }
-                                }
-                            },
-                            data : [
-                                { 
-                                    name: 'Hi', 
-                                    yAxis: 100,
-                                    lineStyle: {
-                                        color: '#14b143'
-                                    },
-                                },{ 
-                                    name: 'Low', 
-                                    yAxis: -100,
-                                    lineStyle: {
-                                        color: '#ef232a'
-                                    },
-                                }
-                            ]
-                        }
-                    }
-                ]
-            };
+            // option_rsi = {
+            //     backgroundColor: '#21202D',
+            //     tooltip : {
+            //         trigger: 'axis',
+            //         showDelay: 0             // delay ms
+            //     },
+            //     legend: {
+            //         // y : -30,
+            //         data:['RSI','RSIDELAY'],
+            //         textStyle: {
+            //             color: '#fff'
+            //         }
+            //     },
+            //     toolbox: {
+            //         y : -30,
+            //         show : true,
+            //         feature : {
+            //             mark : {show: true},
+            //             dataZoom : {show: true},
+            //             dataView : {show: true, readOnly: false},
+            //             magicType : {show: true, type: ['line', 'bar']},
+            //             restore : {show: true},
+            //             saveAsImage : {show: true}
+            //         }
+            //     },
+            //     dataZoom : {
+            //         show : false,
+            //         realtime: true,
+            //         start : Math.round((data.length-70)/(data.length)*100),
+            //         end : 100
+            //     },
+            //     grid: {
+            //         x: 80,
+            //         y: 20,
+            //         x2: 20,
+            //         y2: 60
+            //     },
+            //     xAxis : [
+            //         {
+            //             show : false,
+            //             type : 'category',
+            //             position:'top',
+            //             // boundaryGap : true,
+            //             splitLine: {show:false},
+            //             data : axisData
+            //         }
+            //     ],
+            //     yAxis : [
+            //         {
+            //             type : 'value',
+            //             scale:true,
+            //             splitNumber: 3,
+            //             boundaryGap: [0.05, 0.05],
+            //             // axisLabel: {
+            //             //     formatter: function (v) {
+            //             //         return Math.round(v/10000) + ' 万'
+            //             //     }
+            //             // },
+            //             splitArea : {show : true}
+            //         }
+            //     ],
+            //     series : [//
+            //         {
+            //             name:'RSI',
+            //             type:'line',
+            //             symbol: 'none',
+            //             data: RSIArr,
+            //             markLine : {
+            //                 symbol : 'none',
+            //                 itemStyle : {
+            //                     normal : {
+            //                         color:'#1e90ff',
+            //                         label : {
+            //                             show:true
+            //                         }
+            //                     }
+            //                 },
+            //                 data : [
+            //                     { 
+            //                         name: 'Sell', 
+            //                         yAxis: 70,
+            //                         lineStyle: {
+            //                             color: '#14b143'
+            //                         },
+            //                     },{ 
+            //                         name: 'Buy', 
+            //                         yAxis: 30,
+            //                         lineStyle: {
+            //                             color: '#ef232a'
+            //                         },
+            //                     }
+            //                 ]
+            //             }
+            //         },
+            //         {
+            //             name:'RSIDELAY',
+            //             type:'line',
+            //             symbol: 'none',
+            //             data: RSIDelayArr,
+            //         }
+            //     ]
+            // };
+
+            // option_CCI = {
+            //     backgroundColor: '#21202D',
+            //     tooltip : {
+            //         trigger: 'axis',
+            //         showDelay: 0             // delay ms
+            //     },
+            //     legend: {
+            //         data:['CCI'],
+            //         textStyle: {
+            //             color: '#fff'
+            //         }
+            //     },
+            //     toolbox: {
+            //         y : -30,
+            //         show : true,
+            //         feature : {
+            //             mark : {show: true},
+            //             dataZoom : {show: true},
+            //             dataView : {show: true, readOnly: false},
+            //             magicType : {show: true, type: ['line', 'bar']},
+            //             restore : {show: true},
+            //             saveAsImage : {show: true}
+            //         }
+            //     },
+            //     dataZoom : {
+            //         bottom: 5,
+            //         show : true,
+            //         realtime: true,
+            //         start : Math.round((data.length-70)/(data.length)*100),
+            //         end : 100
+            //     },
+            //     grid: {
+            //         x: 80,
+            //         y: 20,
+            //         x2: 20,
+            //         y2: 80
+            //     },
+            //     xAxis : [
+            //         {
+            //             show : false,
+            //             type : 'category',
+            //             position:'top',
+            //             // boundaryGap : true,
+            //             splitLine: {show:false},
+            //             data : axisData
+            //         }
+            //     ],
+            //     yAxis : [
+            //         {
+            //             type : 'value',
+            //             scale:true,
+            //             splitNumber: 3,
+            //             boundaryGap: [0.05, 0.05],
+            //             splitArea : {show : true}
+            //         }
+            //     ],
+            //     series : [
+            //         {
+            //             name:'CCI',
+            //             type:'line',
+            //             symbol: 'none',
+            //             data: CCIArr,
+            //             markLine : {
+            //                 symbol : 'none',
+            //                 itemStyle : {
+            //                     normal : {
+            //                         color:'#1e90ff',
+            //                         label : {
+            //                             show:true
+            //                         }
+            //                     }
+            //                 },
+            //                 data : [
+            //                     { 
+            //                         name: 'Hi', 
+            //                         yAxis: 100,
+            //                         lineStyle: {
+            //                             color: '#14b143'
+            //                         },
+            //                     },{ 
+            //                         name: 'Low', 
+            //                         yAxis: -100,
+            //                         lineStyle: {
+            //                             color: '#ef232a'
+            //                         },
+            //                     }
+            //                 ]
+            //             }
+            //         }
+            //     ]
+            // };
 
             var canndleStickChart = echarts.init(document.getElementById('canndle_stick_chart'));  
-            var rsiChart = echarts.init(document.getElementById('rsi_chart')); 
+            var canndleStickChartZoom = echarts.init(document.getElementById('canndle_stick_chart_zoom')); 
             var macdChart = echarts.init(document.getElementById('macd_chart')); 
-            var cciChart = echarts.init(document.getElementById('cci_chart'));
+            // var cciChart = echarts.init(document.getElementById('cci_chart'));
+            // var rsiChart = echarts.init(document.getElementById('rsi_chart'));
 
             canndleStickChart.setOption(option);
-            rsiChart.setOption(option_rsi);
             macdChart.setOption(option_macd);
-            cciChart.setOption(option_CCI);
+            canndleStickChartZoom.setOption(option_zoom);
+            // cciChart.setOption(option_CCI);
+            // rsiChart.setOption(option_rsi);
 
-            echarts.connect([canndleStickChart, rsiChart, macdChart, cciChart]);
+            echarts.connect([canndleStickChart, macdChart,canndleStickChartZoom]);
 
             window.onresize = function () {
                 canndleStickChart.resize();
-                rsiChart.resize();
                 macdChart.resize();
-                cciChart.resize();
+                canndleStickChartZoom.resize();
+                // cciChart.resize();
+                // rsiChart.resize();
             }
 
 
