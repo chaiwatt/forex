@@ -323,19 +323,15 @@
             if ((positive && item < 0 || !positive && item >= 0)) {
                 positive = arr[index] >= 0
                 if(arr[index-1]!==null && item !== null){
-                    // console.log(macdarr[index]);
-
                     var isUpTrendUpperMacd = '';
                     var macdatpoint = macdarr[index];
                     if(item > 0){
-                        // console.log('up' + " macd" + macdatpoint);
                         if(macdatpoint < 0){
                             isUpTrendUpperMacd = 'under';
                         }else{
                             isUpTrendUpperMacd = 'above';
                         }
                     }
-   
                     return [index-1, arr[index-1], item,isUpTrendUpperMacd]
                 }
             }
@@ -450,6 +446,26 @@
         return _ssmaSmoth;
     }
 
+    function getCrossPoint(arr1,arr2){
+        let reverseValue = false
+        for(var i = arr2.length-1 ; i > 0 ; i--){
+            if(arr2[arr2.length-1] > arr1[arr2.length-1]){
+                if(arr2[i] < arr1[i]){
+                    return i
+                }
+            }else if(arr2[0] < arr1[0]){
+                if(arr2[i] > arr1[i]){
+                    reverseValue = true;
+                }
+                if(reverseValue == true){
+                    if(arr2[i] < arr1[i]){
+                        return i
+                    }
+                }
+            }
+        }
+    }
+
         //   var colorList = ['#c23531','#2f4554', '#61a0a8', '#d48265', '#91c7ae','#749f83',  '#ca8622', '#bda29a','#6e7074', '#546570', '#c4ccd3'];
     function createData(_forexData){
         var closedPrice = [];
@@ -531,6 +547,11 @@
          Smoth_SSMA13Arr = nullSmoth_SSMA13.concat(Smoth_SSMA13); 
          Smoth_SSMA20Arr = nullSmoth_SSMA20.concat(Smoth_SSMA20); 
          Smoth_SSMA50Arr = nullSmoth_SSMA8.concat(Smoth_SSMA50); 
+         Ssma5CrossSsma8Index = getCrossPoint(Smoth_SSMA8Arr,Smoth_SSMA5Arr)+1;
+         Ssma5CrossSsma13Index = getCrossPoint(Smoth_SSMA13Arr,Smoth_SSMA5Arr)+1;
+         
+        console.log(Smoth_SSMA5Arr[Ssma5CrossSsma8Index] + ' ' + Smoth_SSMA8Arr[Ssma5CrossSsma8Index]);
+        console.log(Smoth_SSMA5Arr[Ssma5CrossSsma13Index] + ' ' + Smoth_SSMA13Arr[Ssma5CrossSsma13Index]);
 
 
         //  RSIArr = nullRS.concat(RSI); 
@@ -987,13 +1008,13 @@
                 tooltip : {
                     trigger: 'axis',
                     showDelay: 0,             // delay ms
-                    formatter: function (params) {
-                        var res = params[0].name;
-                        res += '<br/>' + params[0].seriesName;
-                        res += '<br/>  Open : ' + params[0].value[1] + '  High : ' + params[0].value[4];
-                        res += '<br/>  Close : ' + params[0].value[2] + '  Low : ' + params[0].value[3];
-                        return res;
-                    }
+                    // formatter: function (params) {
+                    //     var res = params[0].name;
+                    //     res += '<br/>' + params[0].seriesName;
+                    //     res += '<br/>  Open : ' + params[0].value[1] + '  High : ' + params[0].value[4];
+                    //     res += '<br/>  Close : ' + params[0].value[2] + '  Low : ' + params[0].value[3];
+                    //     return res;
+                    // }
                 },
                 legend: {
                     data:['USDJPY','SSMA20', 'SSMA5','SSMA8','SSMA13'],
@@ -1125,13 +1146,13 @@
                 tooltip : {
                     trigger: 'axis',
                     showDelay: 0,             // delay ms
-                    formatter: function (params) {
-                        var res = params[0].name;
-                        res += '<br/>' + params[0].seriesName;
-                        res += '<br/>  Open : ' + params[0].value[1] + '  High : ' + params[0].value[4];
-                        res += '<br/>  Close : ' + params[0].value[2] + '  Low : ' + params[0].value[3];
-                        return res;
-                    }
+                    // formatter: function (params) {
+                    //     var res = params[0].name;
+                    //     res += '<br/>' + params[0].seriesName;
+                    //     res += '<br/>  Open : ' + params[0].value[1] + '  High : ' + params[0].value[4];
+                    //     res += '<br/>  Close : ' + params[0].value[2] + '  Low : ' + params[0].value[3];
+                    //     return res;
+                    // }
                 },
                 legend: {
                     data:['USDJPYZOOM','MA100'],
