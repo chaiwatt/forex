@@ -550,8 +550,8 @@
          Ssma5CrossSsma8Index = getCrossPoint(Smoth_SSMA8Arr,Smoth_SSMA5Arr)+1;
          Ssma5CrossSsma13Index = getCrossPoint(Smoth_SSMA13Arr,Smoth_SSMA5Arr)+1;
          
-        console.log(Smoth_SSMA5Arr[Ssma5CrossSsma8Index] + ' ' + Smoth_SSMA8Arr[Ssma5CrossSsma8Index]);
-        console.log(Smoth_SSMA5Arr[Ssma5CrossSsma13Index] + ' ' + Smoth_SSMA13Arr[Ssma5CrossSsma13Index]);
+        console.log('SSMA5: ' + Smoth_SSMA5Arr[Ssma5CrossSsma8Index] + ' SSMA8:' + Smoth_SSMA8Arr[Ssma5CrossSsma8Index]);
+        console.log('SSMA5: ' + Smoth_SSMA5Arr[Ssma5CrossSsma13Index] + ' SSMA13:' + Smoth_SSMA13Arr[Ssma5CrossSsma13Index]);
 
 
         //  RSIArr = nullRS.concat(RSI); 
