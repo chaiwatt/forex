@@ -120,7 +120,9 @@
     var HistogramData = [];
     var MacdData = [];
     var MarkData = [];
-
+    // var markLineCord = [[148, 109.4],[163,109.3]]
+    var markLineCord = [[],[]]
+    var firstCheck = true;
     var forexData =  @json($data);
     function getAvgClosedPrice(mArray,mRange){
         return mArray.slice(0, mRange).reduce((a,c) => a + c, 0) / mRange;
@@ -466,6 +468,52 @@
         }
     }
 
+    function genRegressionLine(startIndex,_data,nRange){
+        var yVal = [];
+        for(var i = 0 ; i < 15 ; i++ ){
+            
+            let sumOpenClosed = (data[startIndex-i][0] + data[startIndex-i][3])/2
+            yVal.push(sumOpenClosed);
+           
+        }
+        const xVal = Array(nRange ).fill().map((_, idx) => 1 + idx)
+      
+        const mX = xVal.reduce((a,v,i)=>(a*i+v)/(i+1));
+        const mY = yVal.reduce((a,v,i)=>(a*i+v)/(i+1));
+
+        let xValMinusMx = xVal.map(function(val){
+            return  (val - mX)
+        })
+
+        let xValMinusMxSquare = xValMinusMx.map(function(val){
+            return  val*val
+        })
+
+        let yValMinusMy = yVal.map(function(val){
+            return  (val - mY)
+        })
+      
+        let diffMxTimediffMy = yValMinusMy.map(function(val,index){
+            return val * xValMinusMx[index]
+        })
+
+        const sumSquareError = xValMinusMxSquare.reduce((a, b) => a + b, 0)
+
+        const sumdiffMxTimediffMy = diffMxTimediffMy.reduce((a, b) => a + b, 0)
+        
+        let slope = sumdiffMxTimediffMy/sumSquareError
+
+        let constantC = mY - mX*slope
+
+        return [slope,constantC]
+    }
+
+    function getCoord(arr,startX,endX,nRage){
+        let startY = 1 * arr[0] + arr[1]
+        let endY = nRage * arr[0] + arr[1]
+        return [[startX,startY],[endX,endY]]
+    }
+
         //   var colorList = ['#c23531','#2f4554', '#61a0a8', '#d48265', '#91c7ae','#749f83',  '#ca8622', '#bda29a','#6e7074', '#546570', '#c4ccd3'];
     function createData(_forexData){
         var closedPrice = [];
@@ -548,12 +596,24 @@
          Smoth_SSMA20Arr = nullSmoth_SSMA20.concat(Smoth_SSMA20); 
          Smoth_SSMA50Arr = nullSmoth_SSMA8.concat(Smoth_SSMA50); 
          Ssma5CrossSsma8Index = getCrossPoint(Smoth_SSMA8Arr,Smoth_SSMA5Arr)+1;
-         Ssma5CrossSsma13Index = getCrossPoint(Smoth_SSMA13Arr,Smoth_SSMA5Arr)+1;
-         
-        console.log('SSMA5: ' + Smoth_SSMA5Arr[Ssma5CrossSsma8Index] + ' SSMA8:' + Smoth_SSMA8Arr[Ssma5CrossSsma8Index]);
-        console.log('SSMA5: ' + Smoth_SSMA5Arr[Ssma5CrossSsma13Index] + ' SSMA13:' + Smoth_SSMA13Arr[Ssma5CrossSsma13Index]);
-
-
+        //  Ssma5CrossSsma13Index = getCrossPoint(Smoth_SSMA13Arr,Smoth_SSMA5Arr)+1;
+        
+         if(firstCheck == true){
+            if(typeof Smoth_SSMA5Arr[Ssma5CrossSsma8Index] === 'undefined' ){
+                
+                firstCheck = false
+            }
+         }else{
+            if(typeof Smoth_SSMA5Arr[Ssma5CrossSsma8Index] !== 'undefined' ){
+                // console.log('SSMA5: ' + Smoth_SSMA5Arr[Ssma5CrossSsma8Index] + ' SSMA8:' + Smoth_SSMA8Arr[Ssma5CrossSsma8Index]);
+                // console.log((Ssma5CrossSsma8Index-1) + ' ' + (Ssma5CrossSsma8Index-1 - 15));
+                let startX = Ssma5CrossSsma8Index - 15
+                let endX = Ssma5CrossSsma8Index
+                let regressiveEq = genRegressionLine(Ssma5CrossSsma8Index,data,15)
+                markLineCord = getCoord(regressiveEq,startX,endX,15)
+            }
+         }
+    
         //  RSIArr = nullRS.concat(RSI); 
         //  RSIDelayArr = nullRSDELAY.concat(DelayRSI); 
         //  CCIArr = nullCCI.concat(CCI); 
@@ -867,6 +927,22 @@
                             },
                             data: MarkData,
                         },
+                        markLine : {
+                            data: [
+                                [{
+                                    coord: markLineCord[0],
+                                    symbol : 'none',
+                                    lineStyle: {
+                                        color: 'white'
+                                    }
+                                    }, {
+                                    coord: markLineCord[1],
+                                    lineStyle: {
+                                        color: 'white'
+                                    }
+                                }]
+                            ],
+                        },
                     }, 
                     {
                         name: 'SSMA20',
@@ -1018,7 +1094,7 @@
                 },
                 legend: {
                     data:['USDJPY','SSMA20', 'SSMA5','SSMA8','SSMA13'],
-                    selected:{'SSMA20':false},
+                    selected:{'SSMA20':false,'SSMA13':false},
                     textStyle: {
                         color: '#fff'
                     }
@@ -1064,20 +1140,42 @@
                     }
                 ],
                 series : [
+                    
                     {
                         name:'USDJPY',
+
                         type:'candlestick',
                         data: data,
-                        markPoint: {
-                            label: {
-                                normal: {
-                                    formatter: function (param) {
-                                        return param != null ? param.data['name'] : '';
+                        markLine : {
+                            data: [
+                                [{
+                                    coord: markLineCord[0],
+                                    symbol : 'none',
+                                    
+                                    lineStyle: {
+                                        color: 'white'
                                     }
-                                }
-                            },
-                            data: MarkData,
+                                    }, {
+                                    coord: markLineCord[1],
+                                    lineStyle: {
+                                        color: 'white'
+                                    }
+                                }]
+                            ],
                         },
+                        markPoint: {
+                            data: [{
+                                    symbol: 'circle',
+                                    symbolSize: [5, 5],
+                                    xAxis: 180,
+                                    yAxis: 110,
+                                    symbolRotate: 0,
+                                    itemStyle: {
+                                    color: 'black'
+                                    },
+
+                                }]
+                            },
                         itemStyle: {
                             color: upColor,
                             color0: downColor,
@@ -1085,6 +1183,7 @@
                             borderColor0: null
                         },
                     }, 
+  
                     {
                         name: 'SSMA20',
                         type: 'line',
@@ -1122,6 +1221,7 @@
                             width: 1
                         }
                     },
+                   
                     // {
                     //     name: 'MA20',
                     //     type: 'line',
@@ -1132,6 +1232,7 @@
                     //         width: 1
                     //     }
                     // }
+                    
                 ]
             };
 
