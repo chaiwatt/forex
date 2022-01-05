@@ -46,7 +46,7 @@
         <div class="card-body">
             
             
-            {{-- <button wire:poll.500ms="fetchData" type="button" class="btn btn-primary">Refresh</button> --}}
+            {{-- <button wire:poll.200ms="fetchData" type="button" class="btn btn-primary">Refresh</button> --}}
   {{-- {{$numOfFetch}} --}}
             {{-- <button lass="btn btn-info" wire:click="$emit('getImage')">Save img</button> --}}
             <div class="row" >
@@ -596,7 +596,14 @@
          Smoth_SSMA20Arr = nullSmoth_SSMA20.concat(Smoth_SSMA20); 
          Smoth_SSMA50Arr = nullSmoth_SSMA8.concat(Smoth_SSMA50); 
          Ssma5CrossSsma8Index = getCrossPoint(Smoth_SSMA8Arr,Smoth_SSMA5Arr)+1;
-        //  Ssma5CrossSsma13Index = getCrossPoint(Smoth_SSMA13Arr,Smoth_SSMA5Arr)+1;
+         Ssma5CrossSsma13Index = getCrossPoint(Smoth_SSMA13Arr,Smoth_SSMA5Arr)+1;
+
+         console.log('ตัดSSMA8: ' + Ssma5CrossSsma8Index + ' ตัดSSMA13:' + Ssma5CrossSsma13Index);
+                // console.log((Ssma5CrossSsma8Index-1) + ' ' + (Ssma5CrossSsma8Index-1 - 15));)
+        // let diffCross =         
+        if((Ssma5CrossSsma13Index - Ssma5CrossSsma8Index) <= 1){
+            console.log('ตัดใกล้');
+        }
         
          if(firstCheck == true){
             if(typeof Smoth_SSMA5Arr[Ssma5CrossSsma8Index] === 'undefined' ){
@@ -1094,7 +1101,7 @@
                 },
                 legend: {
                     data:['USDJPY','SSMA20', 'SSMA5','SSMA8','SSMA13'],
-                    selected:{'SSMA20':false,'SSMA13':false},
+                    selected:{'SSMA20':false},
                     textStyle: {
                         color: '#fff'
                     }
