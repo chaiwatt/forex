@@ -56,13 +56,17 @@
                    
                     
                     <div id="macd_chart"></div>
-                    {{-- <button wire:click="fetchData" type="button" class="btn btn-primary">Refresh</button> --}}
                     <div style="width:200px; display:flex">
-                
                         <button wire:click="fetchData" type="button" class="btn btn-primary mr-2">Refresh</button>
                         <div class="mr-2" id="sma100_trend" style="width:100px;">SMA</div>
                         <div class="" id="macd_trend" style="width:100px; ">MACD</div>
                     </div>
+
+                    {{-- <div style="width:200px; display:flex" wire:poll.200ms="fetchData" >
+                        <div class="mr-2" id="sma100_trend" style="width:100px;">SMA</div>
+                        <div class="" id="macd_trend" style="width:100px; ">MACD</div>
+                    </div> --}}
+
                     <div id="canndle_stick_chart_zoom"></div>
                     {{-- <div id="rsi_chart"></div> --}}
                     {{-- <div id="atr_chart"></div>
