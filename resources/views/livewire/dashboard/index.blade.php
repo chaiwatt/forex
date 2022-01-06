@@ -57,8 +57,13 @@
                     
                     <div id="macd_chart"></div>
                     {{-- <button wire:click="fetchData" type="button" class="btn btn-primary">Refresh</button> --}}
-                    <div id="result" style="width:200px; background:rgb(58, 6, 94)"><button wire:click="fetchData" type="button" class="btn btn-primary">Refresh</button></div>
-                    <div id="canndle_stick_chart_zoom">dfgdg</div>
+                    <div style="width:200px; display:flex">
+                
+                        <button wire:click="fetchData" type="button" class="btn btn-primary mr-2">Refresh</button>
+                        <div class="mr-2" id="sma100_trend" style="width:100px;">SMA</div>
+                        <div class="" id="macd_trend" style="width:100px; ">MACD</div>
+                    </div>
+                    <div id="canndle_stick_chart_zoom"></div>
                     {{-- <div id="rsi_chart"></div> --}}
                     {{-- <div id="atr_chart"></div>
                     <div id="cci_chart"></div> --}}
@@ -126,8 +131,10 @@
     // var markLineCord = [[148, 109.4],[163,109.3]]
     var markLineCord = [[],[]]
     var markMA100LineCord = []
+    var MarkMA100Slope  = []
     var firstCheck = true;
     var forexData =  @json($data);
+    var nowUptrend = false;
     function getAvgClosedPrice(mArray,mRange){
         return mArray.slice(0, mRange).reduce((a,c) => a + c, 0) / mRange;
     }
@@ -516,6 +523,16 @@
     }
 
     function isUpTrend(slope,_data,sma100,nRange,guage){
+        MarkMA100Slope = []
+        MarkMA100Slope.push({
+            name: {
+                slope: 'Slope: ' + slope
+            },//"Slope: " + slope,
+            value: sma100[_data.length-1],
+            xAxis: _data.length-1,
+            yAxis: sma100[_data.length-1],
+            color: "#000",
+        });
         var allSMA100Low = true;
         for(var i = _data.length-nRange ; i < _data.length ; i++ ){
             if(sma100[i] > _data[i][2]){
@@ -643,30 +660,23 @@
          let endX = dataMA100.length-1
          let regressiveEq = genRegressionLine(dataMA100,30)
          markMA100LineCord = getCoord(regressiveEq,startX,endX,30)
-       console.log(isUpTrend(regressiveEq[0],data,dataMA100,30,0.00001))  
+        // console.log(isUpTrend(regressiveEq[0],data,dataMA100,30,0.00001))  
          
-         console.log(regressiveEq);
+        //  console.log(regressiveEq);
 
-         var resultDiv = document.getElementById('result');
+         var sma100Div = document.getElementById('sma100_trend');
+         nowUptrend = isUpTrend(regressiveEq[0],data,dataMA100,30,0.00001)
 
-       if(isUpTrend(regressiveEq[0],data,dataMA100,30,0.00001) == true){
-        console.log('true');
-        resultDiv.style.backgroundColor = 'green';
+       if(nowUptrend == true){
+            sma100Div.style.backgroundColor = '#00da3c';
        }else{
-        console.log('false');
-        resultDiv.style.backgroundColor = 'blue';
+            sma100Div.style.backgroundColor = '#ffc107';
        }
     
-        //  RSIArr = nullRS.concat(RSI); 
-        //  RSIDelayArr = nullRSDELAY.concat(DelayRSI); 
-        //  CCIArr = nullCCI.concat(CCI); 
          CrossClosedWithHistogram = crossListCalc(closedPrice,getSignChange(HistogramArr,MacdArr)); 
-        //  console.log(CrossClosedWithHistogram);
-        // console.log(HistogramArr[HistogramArr.length-1] + ' sma50:' + dataMA50[dataMA50.length-1] + ' sma20:' + dataMA20[dataMA20.length-1] + ' sma5:' + dataMA5[dataMA5.length-1])
-
+ 
          var hisTogramData = getSignChange(HistogramArr,MacdArr);
         
-        //  console.log(hisTogramData);
          
          var previousSum = 0;
          if(numOfTick != 0){
@@ -707,63 +717,6 @@
 
                 
 
-
-
-                //  if(macdAtCross.length > 1){ // หาจุดซื้อ
-                   
-                //     var totalSum = sumHistogram-hisTogramData[hisTogramData.length-1][2]*-1;
-                //     var diffMacd = Math.abs((macdAtCross[macdAtCross.length-1] - macdAtCross[macdAtCross.length-2]));
-
-                //     var stdUsdjpyMacdDiff = usdjpyMacdDiff * numOfTick;
-                //     var stdUsdjpySumHistogram = usdjpySumHistogram * numOfTick;
-                   
-                //     if(totalSum < 0){
-
-                //         if(numOfTick >= 20){
-                //             console.log('tick:'+ numOfTick + ' macd diff:' + diffMacd + ' std Macd diff:' + stdUsdjpyMacdDiff + ' hist sum:' + totalSum  + ' std hist sum:' + stdUsdjpySumHistogram*-1);
-                //         }
-                //         // console.log('macd diff เกิน 0.15 ');
-                //         // const usdjpyMacdDiff = 0.000586674;
-                //         // const usdjpySumHistogram = 0.002771262;
-                //         if((numOfTick >= 20 && diffMacd  >= stdUsdjpyMacdDiff && totalSum <= (stdUsdjpySumHistogram*-1)) || (numOfTick >= 40 && totalSum <= (stdUsdjpySumHistogram*-1)*0.8) ){
-                //             onOrder = true;
-                //             // console.log('ซื้อ' + data[histogramIndex][1]);
-                //             console.log('ซื้อ Date:'+ axisData[histogramIndex] + ' ราคา:'+ data[histogramIndex][1] +' tick:'+ numOfTick + ' macd diff:' + diffMacd + ' std Macd diff:' + stdUsdjpyMacdDiff + ' hist sum:' + totalSum  + ' std hist sum:' + stdUsdjpySumHistogram*-1);
-                //         }
-                //     }
-                //  }
-
-             
-
-                //  if(ClosedData.length > 0 && macdAtCross.length > 1 && numOfTick > 5){
-                //     var totalSum = sumHistogram-hisTogramData[hisTogramData.length-1][2]*-1;
-                //     // console.log(ClosedData);
-                //     var stdv = StandardDeviationCalc(ClosedData);
-                //     console.log("STD: "+ stdv + " tick:" + numOfTick + " total sum:" + totalSum);
-
-                //     if(stdv < 0.015 && totalSum < 0){
-                //         onOrder = true;
-                //             // console.log('ซื้อ' + data[histogramIndex][1]);
-                //             console.log('ซื้อ Date:'+ axisData[histogramIndex] + ' ราคา:'+ data[histogramIndex][1] +' tick:'+ numOfTick + ' macd diff:' + diffMacd + ' std Macd diff:' + stdUsdjpyMacdDiff + ' hist sum:' + totalSum  + ' std hist sum:' + stdUsdjpySumHistogram*-1);
-                //     }
-                   
-
-                //     ClosedData = [];
-                //  }
-
-
-
-                //  HistogramData.push();
-                 
-        
-   
-                // //  if(numOfTick > 15 && ((sumHistogram-hisTogramData[hisTogramData.length-1][2])*-1)  > 0.06 && (MacdArr[histogramIndex]*-1) > 0.01){
-                //  if(numOfTick > 10 && ((sumHistogram-hisTogramData[hisTogramData.length-1][2])*-1)  > 0.03 && (MacdArr[histogramIndex]*-1) > 0.01){
-                //     onOrder = true;
-                //     console.log('ซื้อ' + data[histogramIndex][1]);
-                //  }
-
-
                 numOfCross = hisTogramData.length;
                 
                 
@@ -771,33 +724,8 @@
 
 
                 histogramIndex ++;
-                // sumHistogram += HistogramArr[histogramIndex]
+         
 
-                // previousSum += sumHistogram*-1;
-
-
-
-
-                // if(HistogramData.length > 0){
-                //     var stdUsdjpyMacdDiff = usdjpyMacdDiff * HistogramData.length;
-                //     var stdv = StandardDeviationCalc(ClosedData);
-                    
-                //     const reducer = (accumulator, curr) => accumulator + curr;
-                //     var HistSum = HistogramData.reduce(reducer);
-                //     if(HistogramData.length > 10){
-                //         console.log("STD: "+ stdv + "HistSum: "+ HistSum + " tick: " + HistogramData.length);
-                //     }
-                    
-
-                //     if(stdv < 0.07 && HistSum < 0 && HistogramData.length > 15){
-                //         onOrder = true;
-                //             console.log('ซื้อ' + data[histogramIndex]);
-                            
-                //     }
-                //     HistogramData = []
-                //     ClosedData = [];
-
-                //  }
 
 
                  if(HistogramData.length > 0){
@@ -814,14 +742,9 @@
                  numOfTick = 1;
 
 
-                // console.log('ผลรวม History:' + ' ' + previousSum);
-                // ClosedData.push(data[histogramIndex][1]);
-
              }
          }
          if(numOfTick !== 0){
-            // console.log('นับ:' + numOfTick + ' ผลรวม Histogram:' + sumHistogram + ' Macd:' + MacdArr[histogramIndex] + ' HIST:' + HistogramArr[histogramIndex]);
-            // console.log('current data' + data[histogramIndex]);
             if(data[histogramIndex] !== null){
                 ClosedData.push(data[histogramIndex][1]);
                 HistogramData.push(HistogramArr[histogramIndex]);
@@ -830,15 +753,20 @@
 
             }
      
-            // console.log('histogram in data:' + HistogramData + ' MACD:' + MacdArr[histogramIndex]);
-            // if(MacdArr[histogramIndex] > 0){
-            //     console.log('MACD:' + MacdArr[histogramIndex]);
-            // }
-
+            var macdDiv = document.getElementById('macd_trend');
             if(hisTogramData[hisTogramData.length-1][3] !== ''){
-                console.log('ขาขึ้นตัด' + hisTogramData[hisTogramData.length-1][3])  ;
+                console.log('macd ขาขึ้นตัด' + hisTogramData[hisTogramData.length-1][3])  ;
+                
+                if(hisTogramData[hisTogramData.length-1][3] == 'above'){
+                    macdDiv.style.backgroundColor = '#00da3c';
+                }else{
+                    macdDiv.style.backgroundColor = '#ffc107';
+                }
+                
             }else{
-                console.log('ขาลง')  ;
+                console.log('macd ขาลง')  ;
+                
+                macdDiv.style.backgroundColor = '#ffc107';
             }
            
 
@@ -1025,11 +953,17 @@
                             label: {
                                 normal: {
                                     formatter: function (param) {
-                                        return param != null ? param.data['name'] : '';
+                                        return param != null ? param.data['name']['slope'] : '';
                                     }
                                 }
                             },
-                            data: MarkData,
+                            symbol: 'circle',
+                            symbolRotate: 0,
+                            symbolSize: [1, 1],
+                            itemStyle: {
+                                color: 'black'
+                            },
+                            data: MarkMA100Slope,
                         },
                         markLine : {
                             data: [
@@ -1369,11 +1303,17 @@
                             label: {
                                 normal: {
                                     formatter: function (param) {
-                                        return param != null ? param.data['name'] : '';
+                                        return param != null ? param.data['name']['slope'] : '';
                                     }
                                 }
                             },
-                            data: MarkData,
+                            symbol: 'circle',
+                            symbolRotate: 0,
+                            symbolSize: [1, 1],
+                            itemStyle: {
+                                color: 'black'
+                            },
+                            data: MarkMA100Slope,
                         },
                         itemStyle: {
                             color: upColor,
