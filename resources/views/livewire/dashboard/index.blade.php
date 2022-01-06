@@ -46,15 +46,18 @@
         <div class="card-body">
             
             
-            {{-- <button wire:poll.200ms="fetchData" type="button" class="btn btn-primary">Refresh</button> --}}
+            
+            {{-- <div id="result" style="width:200px; background:rgb(58, 6, 94)"><button wire:poll.200ms="fetchData" type="button" class="btn btn-primary">Refresh</button></div> --}}
   {{-- {{$numOfFetch}} --}}
             {{-- <button lass="btn btn-info" wire:click="$emit('getImage')">Save img</button> --}}
             <div class="row" >
                 <div class="col-12">
                     <div id="canndle_stick_chart"></div>
                    
-                    <button wire:click="fetchData" type="button" class="btn btn-primary">Refresh</button>
+                    
                     <div id="macd_chart"></div>
+                    {{-- <button wire:click="fetchData" type="button" class="btn btn-primary">Refresh</button> --}}
+                    <div id="result" style="width:200px; background:rgb(58, 6, 94)"><button wire:click="fetchData" type="button" class="btn btn-primary">Refresh</button></div>
                     <div id="canndle_stick_chart_zoom">dfgdg</div>
                     {{-- <div id="rsi_chart"></div> --}}
                     {{-- <div id="atr_chart"></div>
@@ -122,6 +125,7 @@
     var MarkData = [];
     // var markLineCord = [[148, 109.4],[163,109.3]]
     var markLineCord = [[],[]]
+    var markMA100LineCord = []
     var firstCheck = true;
     var forexData =  @json($data);
     function getAvgClosedPrice(mArray,mRange){
@@ -468,13 +472,10 @@
         }
     }
 
-    function genRegressionLine(startIndex,_data,nRange){
+    function genRegressionLine(_data,nRange){
         var yVal = [];
-        for(var i = 0 ; i < 15 ; i++ ){
-            
-            let sumOpenClosed = (data[startIndex-i][0] + data[startIndex-i][3])/2
-            yVal.push(sumOpenClosed);
-           
+        for(var i = _data.length-nRange ; i < _data.length ; i++ ){
+            yVal.push(_data[i]);
         }
         const xVal = Array(nRange ).fill().map((_, idx) => 1 + idx)
       
@@ -512,6 +513,22 @@
         let startY = 1 * arr[0] + arr[1]
         let endY = nRage * arr[0] + arr[1]
         return [[startX,startY],[endX,endY]]
+    }
+
+    function isUpTrend(slope,_data,sma100,nRange,guage){
+        var allSMA100Low = true;
+        for(var i = _data.length-nRange ; i < _data.length ; i++ ){
+            if(sma100[i] > _data[i][2]){
+                allSMA100Low = false
+                return false
+            }        
+        }
+        if(allSMA100Low == true && slope > guage){
+            return true
+        }else{
+            return false
+        }
+
     }
 
         //   var colorList = ['#c23531','#2f4554', '#61a0a8', '#d48265', '#91c7ae','#749f83',  '#ca8622', '#bda29a','#6e7074', '#546570', '#c4ccd3'];
@@ -557,7 +574,7 @@
         SIGNAL = EMACalc(MACD,9);
         HISTOGRAM = HistogramCalc(SIGNAL,MACD,9);
         // RSI = RS(closedPrice,14);
-        // DelayRSI = delayRSI(RSI,5);
+        // DelayRSI = delayRSI(RSI,2);
         // CCI = CCICalc(highPrice,lowPrice,closedPrice,20);
         
         // console.log(SIGNAL);
@@ -598,12 +615,12 @@
          Ssma5CrossSsma8Index = getCrossPoint(Smoth_SSMA8Arr,Smoth_SSMA5Arr)+1;
          Ssma5CrossSsma13Index = getCrossPoint(Smoth_SSMA13Arr,Smoth_SSMA5Arr)+1;
 
-         console.log('ตัดSSMA8: ' + Ssma5CrossSsma8Index + ' ตัดSSMA13:' + Ssma5CrossSsma13Index);
+        //  console.log('ตัดSSMA8: ' + Ssma5CrossSsma8Index + ' ตัดSSMA13:' + Ssma5CrossSsma13Index);
                 // console.log((Ssma5CrossSsma8Index-1) + ' ' + (Ssma5CrossSsma8Index-1 - 15));)
         // let diffCross =         
-        if((Ssma5CrossSsma13Index - Ssma5CrossSsma8Index) <= 1){
-            console.log('ตัดใกล้');
-        }
+        // if((Ssma5CrossSsma13Index - Ssma5CrossSsma8Index) <= 1){
+        //     console.log('ตัดใกล้');
+        // }
         
          if(firstCheck == true){
             if(typeof Smoth_SSMA5Arr[Ssma5CrossSsma8Index] === 'undefined' ){
@@ -614,12 +631,31 @@
             if(typeof Smoth_SSMA5Arr[Ssma5CrossSsma8Index] !== 'undefined' ){
                 // console.log('SSMA5: ' + Smoth_SSMA5Arr[Ssma5CrossSsma8Index] + ' SSMA8:' + Smoth_SSMA8Arr[Ssma5CrossSsma8Index]);
                 // console.log((Ssma5CrossSsma8Index-1) + ' ' + (Ssma5CrossSsma8Index-1 - 15));
-                let startX = Ssma5CrossSsma8Index - 15
-                let endX = Ssma5CrossSsma8Index
-                let regressiveEq = genRegressionLine(Ssma5CrossSsma8Index,data,15)
-                markLineCord = getCoord(regressiveEq,startX,endX,15)
+                // let startX = Ssma5CrossSsma8Index - 15
+                // let endX = Ssma5CrossSsma8Index
+                // let regressiveEq = genRegressionLine(Ssma5CrossSsma8Index,data,15)
+                // markLineCord = getCoord(regressiveEq,startX,endX,15)
             }
          }
+
+        //  console.log(dataMA100[dataMA100.length-1])
+         let startX = dataMA100.length-1-30
+         let endX = dataMA100.length-1
+         let regressiveEq = genRegressionLine(dataMA100,30)
+         markMA100LineCord = getCoord(regressiveEq,startX,endX,30)
+       console.log(isUpTrend(regressiveEq[0],data,dataMA100,30,0.00001))  
+         
+         console.log(regressiveEq);
+
+         var resultDiv = document.getElementById('result');
+
+       if(isUpTrend(regressiveEq[0],data,dataMA100,30,0.00001) == true){
+        console.log('true');
+        resultDiv.style.backgroundColor = 'green';
+       }else{
+        console.log('false');
+        resultDiv.style.backgroundColor = 'blue';
+       }
     
         //  RSIArr = nullRS.concat(RSI); 
         //  RSIDelayArr = nullRSDELAY.concat(DelayRSI); 
@@ -995,6 +1031,22 @@
                             },
                             data: MarkData,
                         },
+                        markLine : {
+                            data: [
+                                [{
+                                    coord: markMA100LineCord[0],
+                                    symbol : 'none',
+                                    lineStyle: {
+                                        color: 'white'
+                                    }
+                                    }, {
+                                    coord: markMA100LineCord[1],
+                                    lineStyle: {
+                                        color: 'white'
+                                    }
+                                }]
+                            ],
+                        },
                     }, 
                     {
                         name: 'MA100',
@@ -1329,6 +1381,22 @@
                             borderColor: null,
                             borderColor0: null
                         },
+                        markLine : {
+                            data: [
+                                [{
+                                    coord: markMA100LineCord[0],
+                                    symbol : 'none',
+                                    lineStyle: {
+                                        color: 'white'
+                                    }
+                                    }, {
+                                    coord: markMA100LineCord[1],
+                                    lineStyle: {
+                                        color: 'white'
+                                    }
+                                }]
+                            ],
+                        },
                     }, 
                     {
                         name: 'MA100',
@@ -1543,13 +1611,14 @@
             //                         lineStyle: {
             //                             color: '#14b143'
             //                         },
-            //                     },{ 
-            //                         name: 'Buy', 
-            //                         yAxis: 30,
-            //                         lineStyle: {
-            //                             color: '#ef232a'
-            //                         },
             //                     }
+            //                     // ,{ 
+            //                     //     name: 'Buy', 
+            //                     //     yAxis: 30,
+            //                     //     lineStyle: {
+            //                     //         color: '#ef232a'
+            //                     //     },
+            //                     // }
             //                 ]
             //             }
             //         },
