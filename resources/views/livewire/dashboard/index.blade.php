@@ -132,6 +132,7 @@
     var HistogramData = [];
     var MacdData = [];
     var MarkData = [];
+    var MacdCrossData  = []
     // var markLineCord = [[148, 109.4],[163,109.3]]
     var markLineCord = [[],[]]
     var markMA100LineCord = []
@@ -375,6 +376,32 @@
         return _crossList;
     }
 
+    function getMacdCross(macd,signal){
+        let isUp = true;
+        let crossAbove = true;   
+        if(macd[macd.length-1] > signal[signal.length-1]){ 
+            for(var i = macd.length-1 ; i > 0 ; i--){
+                if(macd[i] < signal[i]){
+                    if(macd[i] < 0){
+                        crossAbove = false
+                    }
+                    break;
+                }
+            }
+        }else{
+            isUp = false
+            for(var i = macd.length-1 ; i > 0 ; i--){
+                if(macd[i] > signal[i]){
+                    if(macd[i] < 0){
+                        crossAbove = false
+                    }
+                    break;
+                }
+            }
+        }
+        return [isUp,crossAbove]
+    }
+
     function crossSMA(shortSMA,longSMA){
         var xValue = 0;
         var yValue = 0;
@@ -483,6 +510,9 @@
         }
     }
 
+    
+
+
     function genRegressionLine(_data,nRange){
         var yVal = [];
         for(var i = _data.length-nRange ; i < _data.length ; i++ ){
@@ -527,30 +557,31 @@
     }
 
     function isUpTrend(slope,_data,sma100,nRange,guage){
-        MarkMA100Slope = []
-        MarkMA100Slope.push({
-            name: {
-                slope: 'Slope: ' + slope
-            },//"Slope: " + slope,
-            value: sma100[_data.length-1],
-            xAxis: _data.length-1,
-            yAxis: sma100[_data.length-1],
-            color: "#000",
-        });
+        let tmp = [
+                {
+                name: {
+                    slope: 'Slope: ' + slope
+                },
+                value: sma100[_data.length-1],
+                xAxis: _data.length-1,
+                yAxis: sma100[_data.length-1],
+                color: "#000",
+            }
+        ]
         var allSMA100Low = true;
         for(var i = _data.length-nRange ; i < _data.length ; i++ ){
             if(sma100[i] > _data[i][2]){
                 allSMA100Low = false
-                return false
+                return [tmp, false]
             }        
         }
         if(allSMA100Low == true && slope > guage){
-            return true
+            return [tmp, true]
         }else{
-            return false
+            return [tmp, false]
         }
-
     }
+
 
         //   var colorList = ['#c23531','#2f4554', '#61a0a8', '#d48265', '#91c7ae','#749f83',  '#ca8622', '#bda29a','#6e7074', '#546570', '#c4ccd3'];
     function createData(_forexData){
@@ -624,7 +655,6 @@
          dataMA200 = calculateMA(200, data);
 
          MacdArr = nullForMACD.concat(MACD); 
-        //  AvgMacdArr = nullAVGMACD.concat(AVGMACD); 
          SignalArr = nullForSIGNAL.concat(SIGNAL); 
          HistogramArr = nullForHISTOGRAM.concat(HISTOGRAM); 
 
@@ -636,6 +666,9 @@
          Ssma5CrossSsma8Index = getCrossPoint(Smoth_SSMA8Arr,Smoth_SSMA5Arr)+1;
          Ssma5CrossSsma13Index = getCrossPoint(Smoth_SSMA13Arr,Smoth_SSMA5Arr)+1;
 
+
+         MacdCrossData = getMacdCross(MacdArr,SignalArr)
+         console.log(MacdCrossData)
         //  console.log('ตัดSSMA8: ' + Ssma5CrossSsma8Index + ' ตัดSSMA13:' + Ssma5CrossSsma13Index);
                 // console.log((Ssma5CrossSsma8Index-1) + ' ' + (Ssma5CrossSsma8Index-1 - 15));)
         // let diffCross =         
@@ -669,7 +702,10 @@
         //  console.log(regressiveEq);
 
          var sma100Div = document.getElementById('sma100_trend');
-         nowUptrend = isUpTrend(regressiveEq[0],data,dataMA100,30,0.00001)
+         let sma100Trend = isUpTrend(regressiveEq[0],data,dataMA100,30,0.00001)
+         nowUptrend = sma100Trend[1];
+         MarkMA100Slope = sma100Trend[0];
+        //  console.log(sma100Trend);
 
        if(nowUptrend == true){
             sma100Div.style.backgroundColor = '#00da3c';
